@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+
+  "name": "Better Fanfiction.net",
+  "description": "Improves Fanfiction.net",
+  "version": "1.0",
+
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "https://www.fanfiction.net/",
+    "http://archiveofourown.org/"
+  ],
+
+  "browser_action": {
+    "default_title": "Better Fanfiction", 
+    "default_icon": "images/icon38.png",
+    "default_popup": "popup.html"  
+  },
+
+  "background": {
+    "scripts": ["eventPage.js"],
+    "persistent": false
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["https://www.fanfiction.net/*"],
+      "css": ["FFnet.css", "fonts.css"],
+      "js": ["jquery-2.1.4.min.js", "jquery plugins.js", "BetterFanfiction.js"],
+      "run_at": "document_start"
+    },
+  ],
+
+  "web_accessible_resources": [
+    "spinner.gif"
+  ]
+}
