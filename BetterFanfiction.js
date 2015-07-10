@@ -555,7 +555,6 @@ function storyLinkClick (e) {
 function populateStoryLanding(d){
     var m = $('#story_landing'),
         chapterTitle,
-        readChapters = readLSRead('Read:' + d.storyid).chapters,
         el = $('<div class="story_container" data-id=' + d.storyid + '> <div class="story_content_box" > <div class="no_padding"> <div class="title"> <span class="content_rating"></span> <div> <a class="story_name" href=""></a> <div class="author"> <span class="by">by</span> <a href=""></a> </div> </div> </div> <div class="story"> <div class="story_data"> <div class="right" style="margin-left:0px;"> <div class="padding"> <div class="description"><img src="" class="story_image"><hr> </div> <div class="chapter_list"> <ul class="chapters"> <li class="bottom"> <span class="status"></span> <div class="word_count"> <b></b> words total </div> </li> </ul> </div> </div> </div> </div> <div class="extra_story_data"> <div class="inner_data"> <span class="date_approved"> <div> <span class="published">Published</span> <br> <span></span> </div> </span> <span class="last_modified"> <div> <span class="published">Updated</span> <br> <span></span> </div> </span> </div> </div> </div> </div> </div></div>'),
         chapterList = d.data.find('select').first().children();
 
@@ -587,9 +586,17 @@ function populateStoryLanding(d){
     for (var i = d.chapters; i > 0; i--) {
         chapterTitle = chapterList.length ? chapterList.eq(i - 1).html().replace(/[0-9]+\. /, '') : 'Chapter 1';
         el.find('.chapters').prepend('<div class="chapter_container ">' +
-            '<li><div data-chapter="' + i + '" class="chapter-read-icon' + (readChapters.indexOf(i) !== -1 ? ' chapter-read' :  '') + '" title="(Click to toggle read status)">✔</div>' +
+            '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
             '<a class="chapter_link" href="' + d.storyLink +'/' + i + '">' + chapterTitle + '</a></li></div>');
     }
+    getReadObj('Read:' + d.storyid, function (readObj) {
+        var readChapters = readObj.chapters;
+        $('.chapter-read-icon', el).each(function(index, element) {
+            if(readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1){
+                $(this).addClass('chapter-read');
+            }
+        });
+    });
     el.find('.chapter-read-icon').click(function(){
         if($(this).hasClass('chapter-read')){
             setVisited(false, $(this).data('chapter'), d.storyid);
@@ -621,13 +628,14 @@ function populateStoryLanding(d){
     setUpBookshelfBar('.story_container[data-id=' + d.storyid + '] ', d.storyid);
 }
 
-function readLSRead(key) {
-    var val = localStorage.getItem(key);
-    if(val !== null){
-        return JSON.parse(val);
-    }
-    //default
-    return {chapters: [], lastRead: 0};
+function getReadObj(key, callback) {
+    chrome.storage.local.get(key, function (items) {
+        if(items[key]){
+            callback(items[key]);
+        } else {
+            callback({chapters: [], lastRead: 0});
+        }
+    });
 }
 
 function createTag(name, type) {
@@ -650,8 +658,7 @@ function createTag(name, type) {
 }
 
 function setVisited(b, chap, id) {
-    var readObj,
-        key,
+    var key,
         accessed = false;
 
     if(!id){
@@ -660,25 +667,26 @@ function setVisited(b, chap, id) {
     }
     chap = chap || chapter;
     key = 'Read:' + id;
-    readObj = readLSRead(key);
-
-    if(accessed && b){
-        readObj.lastRead = Math.trunc(Date.now() * 0.00001);
-    }
-    
-    if(readObj.chapters.indexOf(chap) === -1) {
-        readObj.chapters.push(chap);
-        localStorage.setItem(key, JSON.stringify(readObj));
-    } else if (b === false) {
-        readObj.chapters.splice(readObj.chapters.indexOf(chap),1);
-        if(readObj.chapters.length > 1){
-            localStorage.setItem(key, JSON.stringify(readObj));
-        } else {
-            localStorage.removeItem(key);
+    getReadObj(key, function(readObj) {
+        if(accessed && b){
+            readObj.lastRead = Math.trunc(Date.now() * 0.00001);
         }
-    } else if (accessed) {
-        localStorage.setItem(key, JSON.stringify(readObj));
-    }
+        
+        if(readObj.chapters.indexOf(chap) === -1) {
+            readObj.chapters.push(chap);
+            chrome.storage.local.set({key: readObj});
+        } else if (b === false) {
+            readObj.chapters.splice(readObj.chapters.indexOf(chap),1);
+            if(readObj.chapters.length > 1){
+                chrome.storage.local.set({key: readObj});
+            } else {
+                chrome.storage.local.remove(key);
+            }
+        } else if (accessed) {
+            chrome.storage.local.set({key: readObj});
+        }
+    });
+
 }
 
 function populateBookshelf(storyIds, bookshelf, byComplete) {
@@ -950,14 +958,6 @@ function FanFictionAPI() {
             'html');
     }
 
-    function readLSArray(key) {
-        var val = localStorage.getItem(key);
-        if(val !== null){
-            return JSON.parse(val);
-        }
-        return [];
-    }
-
     //type = 'follow' || 'fav'
     function favOrFollow(type, id, callback) {
         if(!userid) {
@@ -980,9 +980,9 @@ function FanFictionAPI() {
             }
             else {
                 if(type === 'follow'){
-                    localStorage.setItem('AlertsLastModified', Date.now());
+                    chrome.storage.local.set({'AlertsLastModified': Date.now()});
                 } else {
-                    localStorage.setItem('FavoritesLastModified', Date.now());
+                    chrome.storage.local.set({'FavoritesLastModified': Date.now()});
                 }
                 $.toast('We have successfully processed the following:' + data.payload_data, 3000);
                 if(callback !== undefined){
@@ -1111,8 +1111,10 @@ function FanFictionAPI() {
                     }else if(list[0].k === storyid + ''){
                         list.shift();
                     } 
-                    var alsoLikedCache = {created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list};
-                    localStorage.setItem('AlsoLiked:' + storyid, JSON.stringify(alsoLikedCache));
+                    var alsoLikedCache = {created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list},
+                        storageObj = {};
+                    storageObj['AlsoLiked:' + storyid] = alsoLikedCache;
+                    chrome.storage.local.set(storageObj);
                     callback(alsoLikedCache);
                 }
             },
@@ -1156,69 +1158,95 @@ function FanFictionAPI() {
 
     //public
     that.getReadLater = function (callback) {
-        callback(readLSArray('ReadLater'));
+        chrome.storage.local.get('ReadLater', function (items) {
+            if(items.ReadLater){
+                callback(items.ReadLater);
+            } else {
+                callback([]);
+            }
+        });
     };
 
     that.getFollowingList = function (callback){
-        if(followingList === undefined || followingAccessTime < localStorage.getItem('AlertsLastModified')){
-            readFFnetList('alert', callback);
-            return followingList;
-        } else {
-            callback(followingList);
-            return followingList;
-        }
+        chrome.storage.local.get('AlertsLastModified', function (items) {
+            if(followingList === undefined || followingAccessTime < items.AlertsLastModified){
+                readFFnetList('alert', callback);
+            } else {
+                callback(followingList);
+            }
+        });
     };
 
     that.getFavoritedList = function (callback){
-        if(favoritedList === undefined || favoritedAccessTime < localStorage.getItem('FavoritesLastModified')){
-            readFFnetList('favorites', callback);
-            return favoritedList;
-        } else {
-            callback(favoritedList);
-            return favoritedList;
-        }
+        chrome.storage.local.get('FavoritesLastModified', function (items) {
+            if(favoritedList === undefined || favoritedAccessTime < items.FavoritesLastModified){
+                readFFnetList('favorites', callback);
+            } else {
+                callback(favoritedList);
+            }
+        });
     };
 
     that.getLiked = function (callback){
-        callback(readLSArray('Liked'));
+        chrome.storage.local.get('Liked', function (items) {
+            if(items.Liked){
+                callback(items.Liked);
+            } else {
+                callback([]);
+            }
+        });
     };
 
     that.getAlsoLiked = function (callback){
         var chapters,
-            cached = localStorage.getItem('AlsoLiked:' + storyid);
-        if(cached){
-            callback(JSON.parse(cached));
-            return;
-        }
-        chapters = parseInt($('.info-list-chapters > b').html(), 10);
-        if(chapters < parseInt($('.info-list-reviews > a').html(), 10)/15){
-            getReviewersByChapter(storyid, chapters, callback);
-        } else {
-            getReviewers(storyid, callback);
-        }
+            id = 'AlsoLiked:' + storyid;
+        chrome.storage.local.get(id, function (items) {
+            if(items[id]){
+                callback(items[id]);
+                return;
+            }
+            chapters = parseInt($('.info-list-chapters > b').html(), 10);
+            if(chapters < parseInt($('.info-list-reviews > a').html(), 10)/15){
+                getReviewersByChapter(storyid, chapters, callback);
+            } else {
+                getReviewers(storyid, callback);
+            }
+        });
     };
 
     that.getRead = function (callback) {
         var readStories = [];
-        for(var prop in localStorage){
-            if(prop.startsWith('Read:')){
-                readStories.push({k: parseInt(prop.substr(5), 10), v: JSON.parse(localStorage[prop]).lastRead});
+        chrome.storage.local.get(null, function (items) {
+            for(var prop in items){
+                if(prop.startsWith('Read:')){
+                    readStories.push({k: parseInt(prop.substr(5), 10), v: items[prop].lastRead});
+                }
             }
-        }
-        readStories.sort(function (a, b) {
-            return b.v - a.v;
+            readStories.sort(function (a, b) {
+                return b.v - a.v;
+            });
+            callback(readStories);
         });
-        callback(readStories);
     };
 
     that.removeFromRil = function (id, callback) {
-        var list = readLSArray('ReadLater'),
-            index = list.indexOf(id);
-        if(index !== -1){
-            list.splice(index, 1);
-            localStorage.setItem('ReadLater', JSON.stringify(list));
-        }
-        callback();
+        chrome.storage.local.get('ReadLater', function (items) {
+            var index,
+                list;
+            if(items.ReadLater){
+                list = items.ReadLater;
+            } else {
+                list = [];
+            }
+            index = items.ReadLater.indexOf(id);
+            if(index !== -1){
+                list.splice(index, 1);
+                chrome.storage.local.set({'ReadLater': list});
+            }
+            if(callback !== undefined){
+                callback();
+            }
+        });
     };
 
     that.unfollow = function (id, callback) {
@@ -1227,7 +1255,7 @@ function FanFictionAPI() {
             'rids[]': id
         },
         function (data) {
-            localStorage.setItem('AlertsLastModified', Date.now());
+            chrome.storage.local.set({'AlertsLastModified': Date.now()});
             //$.toast('You have succesfully unfollowed: ' + title.replace(/\+/g, ' '));
             if(callback !== undefined){
                 callback();
@@ -1245,7 +1273,7 @@ function FanFictionAPI() {
             'rids[]': id
         },
         function (data) {
-            localStorage.setItem('FavoritesLastModified', Date.now());
+            chrome.storage.local.set({'FavoritesLastModified': Date.now()});
             //$.toast('You have succesfully unfaved: ' + title.replace(/\+/g, ' '));
             if(callback !== undefined){
                 callback();
@@ -1258,22 +1286,41 @@ function FanFictionAPI() {
     };
 
     that.unlike = function (id, callback){
-        var list = readLSArray('Liked'),
-            index = list.indexOf(id);
-        if(index !== -1){
-            list.splice(index, 1);
-            localStorage.setItem('Liked', JSON.stringify(list));
-        }
-        callback();
+        chrome.storage.local.get('Liked', function (items) {
+            var index,
+                list;
+            if(items.Liked){
+                list = items.Liked;
+            } else {
+                list = [];
+            }
+            index = items.Liked.indexOf(id);
+            if(index !== -1){
+                list.splice(index, 1);
+                chrome.storage.local.set({'Liked': list});
+            }
+            if(callback !== undefined){
+                callback();
+            }
+        });
     };
 
     that.addToRil = function (id, callback) {
-        var list = readLSArray('ReadLater');
-        if(list.indexOf(id) === -1){
-            list.push(id);
-            localStorage.setItem('ReadLater', JSON.stringify(list));
-        }
-        callback();
+        chrome.storage.local.get('ReadLater', function (items) {
+            var list;
+            if(items.ReadLater){
+                list = items.ReadLater;
+            } else {
+                list = [];
+            }
+            if(list.indexOf(id) === -1){
+                list.push(id);
+                chrome.storage.local.set({'ReadLater': list});
+            }
+            if(callback !== undefined){
+                callback();
+            }
+        });
     };
 
     that.fav = function (id, callback){
@@ -1285,12 +1332,21 @@ function FanFictionAPI() {
     };
 
     that.like = function (id, callback){
-        var list = readLSArray('Liked');
-        if(list.indexOf(id) === -1){
-            list.push(id);
-            localStorage.setItem('Liked', JSON.stringify(list));
-        }
-        callback();
+        chrome.storage.local.get('Liked', function (items) {
+            var list;
+            if(items.Liked){
+                list = items.Liked;
+            } else {
+                list = [];
+            }
+            if(list.indexOf(id) === -1){
+                list.push(id);
+                chrome.storage.local.set({'Liked': list});
+            }
+            if(callback !== undefined){
+                callback();
+            }
+        });
     };
     return that;
 }
