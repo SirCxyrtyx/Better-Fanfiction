@@ -31,27 +31,6 @@
   line-height: 1.8em;
   position: relative;
 }
-    
-#profile_top > .background-overlay {
-    position: absolute;
-  left: 0px;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  overflow: hidden;
-}
-
-#profile_top > .background-overlay div {
-  position: absolute;
-  left: 0px;
-  top: -100px;
-  right: 0px;
-  bottom: -100px;
-  background-position: center 30%;
-  background-size: cover;
-  opacity: 0.05;
-  -webkit-filter: blur(7px);
-}
 
 #profile_top > .inner {
   max-width: 1300px;
@@ -209,7 +188,7 @@
     z-index: 10;
 }
 
-.bookshelves li {
+.bookshelves > li {
   display: inline-block;
   width: 37px;
   height: 37px;
@@ -223,25 +202,25 @@
   -webkit-user-select: none;
 }
 
-.bookshelves li.unselected {
+.bookshelves > li.unselected {
   background: #EEE !important;
 }
 
-.bookshelves li.selected {
+.bookshelves > li.selected {
   position: relative;
   z-index: 2;
   text-shadow: -1px -1px rgba(0, 0, 0, 0.15);
 }
 
-.bookshelves li:first-child {
+.bookshelves > li:first-child {
   border-top-left-radius: 5px;
 }
 
-.bookshelves li:last-child {
+.bookshelves > li.dropdown-toggle  {
   border-top-right-radius: 5px;
 }
     
-.bookshelves li span {
+.bookshelves > li span {
   display: block;
   color: #777;
   width: 37px;
@@ -254,7 +233,7 @@
   font-weight: bold;
 }
 
-.bookshelves li.selected span {
+.bookshelves > li.selected span {
   color: #FFF !important;
 }
 
@@ -741,11 +720,11 @@ h4.modal-title {
   float: right;
 }
 
-.story_container .bookshelves li:last-child {
+.story_container .bookshelves > li.dropdown-toggle{
   border-bottom-right-radius: 5px;
 }
 
-.story_container .bookshelves li:first-child {
+.story_container .bookshelves > li:first-child {
   border-bottom-left-radius: 5px;
 }
 
@@ -799,6 +778,51 @@ button.icon-heart {
   display: none;
 }
 
+.shelf i {
+  display: none;
+}
+
+.shelf.selected i {
+  display: inline;
+}
+
+.bookshelves .dropdown-menu {
+    left: initial;
+    right: 0;
+    min-width: 270.2px;
+}
+
+.shelf {
+    font-size: 16.9px;
+    color: rgb(85, 85, 85);
+    height: 23px;
+    cursor: : pointer;
+}
+
+.shelf:hover {
+    background-color: #3087d8;
+    color: white;
+}
+
+.shelf:hover i {
+    color: white;
+}
+
+.shelf i {
+    float: right;
+    margin-right: 10px;
+    color: rgb(54, 165, 11);
+}
+
+.shelf span {
+    float: left;
+    margin-left: 10px;
+}
+
+#bookshelf_tabs a[href="#"] {
+    padding-top: 3.5px;
+    padding-bottom: 2.5px;
+}
 
 /* 
  * for review pages 
@@ -806,4 +830,94 @@ button.icon-heart {
 
 center + select {
   margin-top: -31px;
+}
+
+td > div {
+  word-break: break-word;
+}
+
+/*
+ * for story lists
+ */
+
+.stories-main {
+    position: relative;
+    /*width: 70%;
+    float: left;*/
+}
+
+.stories-side {
+    width: 30%;
+    position: relative;
+    float: right;
+    z-index: 1;
+    background-color: white;
+}
+
+.stories-side > div {
+  padding-left: 20px;
+}
+
+.stories-side > div > div {
+  padding: 15px;
+}
+
+label.control {
+    width: 100%;
+    padding: 5px 0px;
+    position: relative;
+    margin-bottom: 2px;
+}
+
+label.control > input[type="checkbox"] {
+    opacity: 0;
+}
+
+.control input:checked ~ .control-indicator {
+    background-color: #519FFF;
+}
+
+span.control-indicator {
+    border-radius: 2em;
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #EAE9E9;
+}
+
+span.control-label {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    left: 0;
+}
+
+
+/*
+ * Modified from Bootstrap
+ */
+
+.panel {
+    border: 1px solid transparent;
+    border-radius: 4px;
+    border-color: #ddd;
+    margin-bottom: 5px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+
+.panel-heading {
+    color: #333;
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.panel-body {
+    padding: 15px;
 }
