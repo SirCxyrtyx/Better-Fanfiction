@@ -359,6 +359,8 @@ function setUpStoryNav() {
 }
 
 function loadChapterInPlace(d, chap, scrollToTop, back) {
+    var chapterTitle;
+
     if (!back) {
         history.replaceState({chapter: chapter, scrollPos: $('body').scrollTop()}, '', d.storyLink + '/' + chapter);
     }
@@ -414,8 +416,10 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
     $('.info-list-reviews a').html(d.reviews).attr('href', '/r/' + storyid + '/' + chapter);
     $('select').get(0).selectedIndex = chapter - 1;
     $('select').get(1).selectedIndex = chapter - 1;
-    document.title = d.title + ' Chapter ' + chapter + ': ' + $('select')[0][chapter - 1].text.split(/\d+\. /)[1] +
-        ', a '  + $('#pre_story_links > .lc-left > a:nth-child(3)').html().toLowerCase() + ' fanfic | FanFiction';
+
+    chapterTitle = $('select')[0][chapter - 1].text.split(/\d+\. /)[1];
+    chapterTitle = (/Chapter \d{1,2}/.test(chapterTitle) ? ' ' : (' Chapter ' + chapter + ': ')) + chapterTitle;
+    document.title = d.title + chapterTitle + ', a '  + $('#pre_story_links > .lc-left > a:nth-child(3)').html().toLowerCase() + ' fanfic | FanFiction';
 
     //to make reviews go to the right chapter and story
     storytextid = parseInt($('form[name="myselect"] script', d.data).html().match(/storytextid=(\d+)/)[1], 10);
