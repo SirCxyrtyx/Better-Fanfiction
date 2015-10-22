@@ -1478,7 +1478,7 @@ function FanFictionAPI() {
                 return;
             }
             chapters = parseInt($('.info-list-chapters > b').html(), 10);
-            if (chapters < parseInt($('.info-list-reviews > a').html(), 10) / 15) {
+            if (chapters < parseInt($('.info-list-reviews > a').html().replace(',', ''), 10) / 15) {
                 getReviewersByChapter(storyid, chapters, callback);
             } else {
                 getReviewers(storyid, callback);
