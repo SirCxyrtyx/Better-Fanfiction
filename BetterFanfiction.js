@@ -567,7 +567,7 @@ function setUpBookshelves() {
             '<li role="presentation"><a href="#liked_tab" role="tab">Liked</a></li>' +
             '<li role="presentation"><a href="#alsoliked_tab" role="tab">Also Liked</a></li>' +
             '<li role="presentation"><a href="#read_tab" role="tab">Read</a></li>' +
-            '<li role="presentation"><a href="#" role="tab">Shelves: <select class="shelf-select"><option>--</option></select></a></li>' +
+            '<li role="presentation"><a href="#" role="tab">Shelves: <select id="fandom-select"></select><select id="shelf-select"><option id="default-shelf">--</option></select></a></li>' +
         '</ul><div class="tab-content">' +
             '<div role="tabpanel" class="tab-pane" id="ril_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="fav_tab"><ul class="story-card-list list_boxes"></ul></div>' +
@@ -581,15 +581,34 @@ function setUpBookshelves() {
     $('<div class="xmenu_item"><a class="show-bookshelves-popup">Bookshelves</a></div>').appendTo('.zui tr > td:nth-child(1)');
 
     ffAPI.getBookshelves(function (shelves) {
+        var fandoms = [];
         shelves.forEach(function (val, i) {
-            $('#bookshelf_display .shelf-select').append('<option data-id="' + val.id + '">' + val.name + '</option>');
+            $('#shelf-select')
+            .append('<option class="' + val.fandom.map(s => s.replace(/[^_a-zA-Z-]/g, '')).join(' ') + '" data-id="' + val.id + '">' + val.name + '</option>');
             $('#bookshelf_display .tab-content')
-            .append('<div role="tabpanel" class="tab-pane" id="shelf_tab_' + (i + 1) + '"><ul class="story-card-list list_boxes"></ul></div>');
+            .append('<div role="tabpanel" class="tab-pane" id="shelf_tab_' + val.id + '"><ul class="story-card-list list_boxes"></ul></div>');
+
+            val.fandom.forEach(function (item) {
+                if (fandoms.indexOf(item) === -1) {
+                    fandoms.push(item);
+                } else {
+                    if (!$('#default-shelf').hasClass(item.replace(/[^_a-zA-Z-]/g, ''))) {
+                        $('#default-shelf').addClass(item.replace(/[^_a-zA-Z-]/g, ''));
+                    }
+                }
+            });
         });
 
-        $('#bookshelf_display .shelf-select').change(function (e) {
+        fandoms.forEach(function (val) {
+            $('#fandom-select')
+            .append('<option value="' + val.replace(/[^_a-zA-Z-]/g, '') + '">' + val + '</option>');
+        });
+
+        $('#shelf-select').chainedTo('#fandom-select');
+
+        $('#shelf-select').change(function (e) {
             var target = e.target,
-                tabId = '#shelf_tab_' + target.selectedIndex;
+                tabId = '#shelf_tab_' + target.selectedOptions[0].dataset.id;
             if (!$(tabId).hasClass('populated')) {
                 ffAPI.bookshelf.get(target.selectedOptions[0].dataset.id, function (list) {
                     populateBookshelf(list, $(tabId));
