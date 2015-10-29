@@ -442,6 +442,7 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
     $('select').get(0).selectedIndex = chapter - 1;
     $('select').get(1).selectedIndex = chapter - 1;
 
+    //set the document title (tab name)
     chapterTitle = $('select')[0][chapter - 1].text.split(/\d+\. /)[1];
     chapterTitle = (/Chapter \d{1,2}/.test(chapterTitle) ? ' ' : (' Chapter ' + chapter + ': ')) + chapterTitle;
     document.title = d.title + chapterTitle + ', a '  + $('#pre_story_links > .lc-left > a:nth-child(3)').html().toLowerCase() + ' fanfic | FanFiction';
@@ -449,6 +450,10 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
     //to make reviews go to the right chapter and story
     storytextid = parseInt($('form[name="myselect"] script', d.data).html().match(/storytextid=(\d+)/)[1], 10);
     $('#review_review').attr('onclick', 'chapter=' + chapter + ',storytextid=' + storytextid + ',storyid=' + storyid);
+
+    //reset review form in case a review has been left
+    $('#review').show();
+    $('#review_success').hide();
 
     //to make abuse reports and community adds go to the right chapter and story
     $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + storyid);
