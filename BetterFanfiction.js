@@ -1,8 +1,8 @@
 // jshint jquery: true, undef: true,curly: true, bitwise: true, eqeqeq: true, immed: true, strict: true, unused: vars, devel: true, browser: true, newcap: false, multistr: true
 /* global chrome */
 
+(function () {
 'use strict';
-
 var ffAPI = FanFictionAPI(),
     pageType = 'browse',
     storyid,
@@ -319,7 +319,7 @@ function setUpStoryNav() {
     $('select').before('<img class="loading-prev" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
     selectWidth = $('select').outerWidth();
     $('<img class="loading-select" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />')
-        .css('padding', '0px ' + (selectWidth - 30)/2 + 'px').insertAfter('select');
+        .css('padding', '0px ' + (selectWidth - 30) / 2 + 'px').insertAfter('select');
 
     $('.nav-next').eq(0).click(function (e) {
         e.preventDefault();
@@ -794,7 +794,7 @@ function populateStoryLanding(d) {
     }
 
     //chapters
-    for (var i = d.chapters; i > 0; i--) {
+    for (let i = d.chapters; i > 0; i--) {
         chapterTitle = chapterList.length ? chapterList.eq(i - 1).html().replace(/[0-9]+\. /, '') : 'Chapter 1';
         el.find('.chapters').prepend('<div class="chapter_container ">' +
             '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
@@ -827,7 +827,7 @@ function populateStoryLanding(d) {
 
     //Genre tags
     if (d.genres) {
-        for (var j = d.genres.length - 1; j >= 0; j--) {
+        for (let j = d.genres.length - 1; j >= 0; j--) {
             createTag(d.genres[j], 'character').insertAfter(el.find('img.story_image'));
         }
     }
@@ -1079,7 +1079,7 @@ function createStoryCard(data, storyid, index, byComplete) {
 
     //genres
     if (d.genres) {
-        for (var j = d.genres.length - 1; j >= 0; j--) {
+        for (let j = d.genres.length - 1; j >= 0; j--) {
             $('<span class="story_category story_category_' + d.genres[j].toLowerCase() + '">' + d.genres[j] + '</span>')
                 .prependTo(storyCard.find('.short_description'));
         }
@@ -1122,7 +1122,7 @@ function alignStoryCards(cardList) {
     cards.sort(function (a, b) {
         return $(a).attr('data-order') - $(b).attr('data-order');
     });
-    for (var i = 1; i < cards.length; i += 2) {
+    for (let i = 1; i < cards.length; i += 2) {
         el1 = cards.eq(i - 1);
         el2 = cards.eq(i);
 
@@ -1137,7 +1137,8 @@ function alignStoryCards(cardList) {
 }
 
 function fandomsInList(listClass) {
-    var also = {};
+    var also = {},
+        list = [];
     $(listClass + ' .z-list').each(function () {
         var item = $('.xgray', this).html().match(/^(.+?) - /)[1],
             item2;
@@ -1161,8 +1162,7 @@ function fandomsInList(listClass) {
         }
 
     });
-    var list = [];
-    for (var prop in also) {
+    for (let prop in also) {
         if (also.hasOwnProperty(prop)) {
             list.push({
                 'k': prop,
@@ -1378,7 +1378,7 @@ function FanFictionAPI() {
                     getUserFavs(users, callback, index + 1, list);
                 } else {
                     progressBar.close();
-                    var also = {};
+                    let also = {};
                     list.forEach(function (item) {
                         if (!also[item]) {
                             also[item] = 1;
@@ -1388,7 +1388,7 @@ function FanFictionAPI() {
 
                     });
                     list = [];
-                    for (var prop in also) {
+                    for (let prop in also) {
                         if (also.hasOwnProperty(prop)) {
                             list.push({
                                 'k': prop,
@@ -1407,16 +1407,16 @@ function FanFictionAPI() {
                     }else if (list[0].k === storyid + '') {
                         list.shift();
                     }
-                    var alsoLikedCache = {created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list};
+                    let alsoLikedCache = {created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list};
                     chrome.storage.local.set({['AlsoLiked:' + storyid]: alsoLikedCache});
                     callback(alsoLikedCache);
                 }
             },
         'html').fail(function () {
+            var also = {};
             alert('getUserFavs terminated early, on user ' + index + ' of ' + users.length);
             console.log('getUserFavs terminated early, on user ' + index + ' of ' + users.length);
             progressBar.close();
-            var also = {};
             list.forEach(function (item) {
                 if (!also[item]) {
                     also[item] = 1;
@@ -1426,7 +1426,7 @@ function FanFictionAPI() {
 
             });
             list = [];
-            for (var prop in also) {
+            for (let prop in also) {
                 if (also.hasOwnProperty(prop)) {
                     list.push({
                         'k': prop,
@@ -1526,7 +1526,7 @@ function FanFictionAPI() {
     that.getRead = function (callback) {
         var readStories = [];
         chrome.storage.local.get(null, function (items) {
-            for (var prop in items) {
+            for (let prop in items) {
                 if (prop.startsWith('Read:')) {
                     readStories.push({k: parseInt(prop.substr(5), 10), v: items[prop].lastRead});
                 }
@@ -1868,3 +1868,5 @@ function easydate(unix) {
         return month_short + ' ' + day + ', ' + year;
     }
 }
+
+})();
