@@ -23,6 +23,14 @@
 #share_providers {
   display: none; 
 }
+
+.loading-next {
+  margin: 0px 23px 0px 25px;
+}
+
+.loading-prev {
+  margin: 0px 25px 0px 0px;
+}
     
 #profile_top {
   background-color: #282828;

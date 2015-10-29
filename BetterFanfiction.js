@@ -298,22 +298,33 @@ function userPage() {
 }
 
 function setUpStoryNav() {
+    var selectWidth;
+    //remove original event-bindings
     $('#chap_select ~ button').addClass('nav-next').removeAttr('onclick');
     $('button[onclick^="self"]:not(.nav-next)').addClass('nav-prev').removeAttr('onclick');
     $('select').removeAttr('onchange');
     $('#content_wrapper_inner > span').replaceWith($('#content_wrapper_inner > span').clone(false));
     $('div > select').parent().replaceWith($('div > select').parent().clone(false));
 
+    //add buttons if they aren't there
     if ($('.nav-next').length === 0) {
         $('select').after('<button class="btn nav-next" type="BUTTON" style="display:none;margin-left:5px;">Next &gt;</button>');
     }
-
     if ($('.nav-prev').length === 0) {
         $('select').before('<button class="btn nav-prev" type="BUTTON" style="display:none;margin-right:5px;">&lt; Prev</button>');
     }
 
+    //add loading spinners
+    $('select').after('<img class="loading-next" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
+    $('select').before('<img class="loading-prev" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
+    selectWidth = $('select').outerWidth();
+    $('<img class="loading-select" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />')
+        .css('padding', '0px ' + (selectWidth - 30)/2 + 'px').insertAfter('select');
+
     $('.nav-next').eq(0).click(function (e) {
         e.preventDefault();
+        $(this).hide();
+        $('.loading-next').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
             loadChapterInPlace(parseStoryData(data, storyid), chapter + 1, false);
         });
@@ -321,6 +332,8 @@ function setUpStoryNav() {
     });
 
     $('.nav-next').eq(1).click(function () {
+        $(this).hide();
+        $('.loading-next').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
             loadChapterInPlace(parseStoryData(data, storyid), chapter + 1);
         });
@@ -328,6 +341,8 @@ function setUpStoryNav() {
     });
 
     $('.nav-prev').eq(0).click(function () {
+        $(this).hide();
+        $('.loading-prev').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
             loadChapterInPlace(parseStoryData(data, storyid), chapter - 1, false);
         });
@@ -335,6 +350,8 @@ function setUpStoryNav() {
     });
 
     $('.nav-prev').eq(1).click(function () {
+        $(this).hide();
+        $('.loading-prev').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
             loadChapterInPlace(parseStoryData(data, storyid), chapter - 1);
         });
@@ -343,6 +360,8 @@ function setUpStoryNav() {
 
     $('select').eq(0).change(function (e) {
         var target = e.target;
+        $(this).hide();
+        $('.loading-select').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
             loadChapterInPlace(parseStoryData(data, storyid), target.selectedIndex + 1, false);
         });
@@ -351,6 +370,8 @@ function setUpStoryNav() {
 
     $('select').eq(1).change(function (e) {
         var target = e.target;
+        $(this).hide();
+        $('.loading-select').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
             loadChapterInPlace(parseStoryData(data, storyid), target.selectedIndex + 1);
         });
@@ -390,6 +411,10 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
             $('.nav-next').show();
         }
     }
+    $('select').show();
+    $('.loading-next').hide();
+    $('.loading-prev').hide();
+    $('.loading-select').hide();
 
     if (d.chapters > $('select')[0].length) {
         $('select').replaceWith(d.data.find('select').eq(0));
@@ -623,21 +648,6 @@ function setUpBookshelves() {
     });
 
     if (pageType === 'story') {
-
-        /*$('<div class="xmenu_item"><a class="show-alsoliked-popup">Also Liked</a></div>').appendTo('.zui tr > td:nth-child(1)');
-
-        $('.show-alsoliked-popup').click(function () {
-            if (!$('#alsoliked_tab').hasClass('populated')) {
-                $('#alsoliked_tab').addClass('populated')
-                    .append('<img width="64" height="64" title="" alt="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
-                ffAPI.getAlsoLiked(function (alObj) {
-                    $('#alsoliked_tab img').remove();
-                    populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
-                });
-            }
-            $('#bookshelf_tabs a[href="#alsoliked_tab"]').tab('show');
-            $('#bookshelf_display').modal().show().addClass('in');
-        });*/
         $('#bookshelf_tabs a[href="#alsoliked_tab"]').click(function (e) {
             e.preventDefault();
             if (!$('#alsoliked_tab').hasClass('populated')) {
