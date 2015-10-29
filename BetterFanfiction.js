@@ -452,6 +452,9 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
 
     //to make abuse reports and community adds go to the right chapter and story
     $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + storyid);
+
+    //to properly report pageviews to FF.net's stat-tracker
+    $.get($('#storytextp', d.data).prev().html().match(/\/eye\/[^']+/)[0]);
 }
 
 function setUpBookshelfBar(container, storyData) {
