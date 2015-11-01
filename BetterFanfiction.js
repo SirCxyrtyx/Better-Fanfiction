@@ -6,7 +6,6 @@
 var ffAPI = FanFictionAPI(),
     pageType = 'browse',
     storyid,
-    userid,
     chapter,
     storytextid,
     path = document.location.pathname,
@@ -36,7 +35,7 @@ if (document.cookie.search('funn=') === -1 && path !== '/login.php') {
         $.toast('You\'re not logged in.', 2500);
     });
 } else {
-    userid = -1;
+    ffAPI.userid = -1;
 }
 document.addEventListener('DOMContentLoaded', run);
 
@@ -46,8 +45,8 @@ function run() {
         storyPage();
         setVisited(true);
         setUpStoryNav();
-        if (userid === -1) {
-            userid = parseInt($('form[name="myselect"] script').html().match(/userid = (\d+)/)[1], 10);
+        if (document.cookie.search('funn=') !== -1) {
+            ffAPI.userid = parseInt($('form[name="myselect"] script').html().match(/userid = (\d+)/)[1], 10);
         }
         storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
     } else {
@@ -1175,15 +1174,31 @@ function fandomsInList(listClass) {
 
 function FanFictionAPI() {
     var that = {},
+        userid,
+        loggedIn = false,
         followingList,
         favoritedList,
         followingAccessTime,
         favoritedAccessTime,
         progressBar;
 
+    chrome.storage.local.get('userid', function (items) {
+        if (items.userid) {
+            userid = items.userid;
+        }
+    });
+
+    Object.defineProperty(that, 'userid', { set: function (x) {
+        loggedIn = true;
+        if(x !== -1){
+            userid = x;
+            chrome.storage.local.set({'userid': x});
+        }
+    } });
+
     //type = 'alert' || 'favorites'
     function readFFnetList(type, callback, index, list) {
-        if (!userid) {
+        if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
             return;
         }
@@ -1222,44 +1237,9 @@ function FanFictionAPI() {
 
     //type = 'follow' || 'fav'
     function favOrFollow(type, id, callback) {
-        if (!userid) {
+        if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
             return;
-        }
-
-        if (userid === -1) {
-            $.get('https://www.fanfiction.net/account/settings.php', function (d) {
-                userid = parseInt(d.match(/Userid<\/td>\n\t.+?(\d+)/)[1], 0);
-
-                $.post('/api/ajax_subs.php', {
-                    storyid: id,
-                    userid: userid,
-
-                    authoralert: 0,
-                    storyalert: type === 'follow' ? 1 : 0,
-                    favstory: type === 'fav' ? 1 : 0,
-                    favauthor: 0
-                },
-                function (data) {
-                    if (data.error) {
-                        $.toast('We are unable to process your request due to an network error. Please try again later.');
-                    } else {
-                        if (type === 'follow') {
-                            chrome.storage.local.set({'AlertsLastModified': Date.now()});
-                        } else {
-                            chrome.storage.local.set({'FavoritesLastModified': Date.now()});
-                        }
-                        $.toast('We have successfully processed the following:' + data.payload_data, 3000);
-                        if (callback !== undefined) {
-                            callback();
-                        }
-                    }
-                },
-                'json'
-                ).error(function () {
-                    $.toast('We are unable to process your request due to an network error. Please try again later.');
-                });
-            });
         } else {
             $.post('/api/ajax_subs.php', {
                 storyid: id,
@@ -1504,7 +1484,7 @@ function FanFictionAPI() {
         var chapters,
             id = 'AlsoLiked:' + storyid;
 
-        if (!userid) {
+        if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
             return;
         }
@@ -1578,7 +1558,7 @@ function FanFictionAPI() {
     };
 
     that.unfollow = function (id, callback) {
-        if (!userid) {
+        if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
             return;
         }
@@ -1601,7 +1581,7 @@ function FanFictionAPI() {
     };
 
     that.unfav = function (id, callback) {
-        if (!userid) {
+        if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
             return;
         }
