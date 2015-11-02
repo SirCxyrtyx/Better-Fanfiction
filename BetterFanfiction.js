@@ -69,6 +69,7 @@ function run() {
     if (pageType === 'user') {
         userPage();
     } else if (pageType === 'review') {
+        //place a chapter select at the bottom of the page
         $('.thead > select').clone(true).appendTo('.table-striped tbody')
             .wrap('<tr><td style="background-color: inherit;"></td></tr>').before($('center'));
     } else if (pageType === 'group') {
@@ -83,13 +84,9 @@ function storyPage(data) {
     var d = data || parseStoryData($('html'), storyid),
         hasImage = !!d.storyImageLink,
         imageSource = hasImage ? d.storyImageLink.substr(0, d.storyImageLink.length - 3) + '180/' : '',
-        chars,
-        pair,
         el,
         tags,
-        wordsEl,
-        i,
-        j;
+        wordsEl;
 
     el = $('<div id="profile_top">' +
            '<div class="inner">' +
@@ -124,16 +121,17 @@ function storyPage(data) {
 
     //Genre tags
     if (d.genres) {
-        for (i = 0; i < d.genres.length; i++) {
+        for (let i = 0; i < d.genres.length; i++) {
             tags.append(createTag(d.genres[i], 'genre'));
         }
     }
 
     //Character Tags
     if (d.chars) {
-        chars = d.chars.split(']');
+        let chars = d.chars.split(']'),
+            pair;
 
-        for (i = 0; i < chars.length; i++) {
+        for (let i = 0; i < chars.length; i++) {
             pair = false;
             chars[i] = chars[i].trim();
             if (chars[i][0] === '[') {
@@ -142,7 +140,7 @@ function storyPage(data) {
                 tags.append('<span>[</span>');
             }
             chars[i] = chars[i].split(',');
-            for (j = 0; j < chars[i].length; j++) {
+            for (let j = 0; j < chars[i].length; j++) {
                 if (chars[i][j] !== '') {
                     tags.append(createTag(chars[i][j], 'character'));
                 }
@@ -174,24 +172,6 @@ function storyPage(data) {
     $('#author-title > b').attr('data-original', storyid).click(storyLinkClick);
 
     setUpBookshelfBar('#profile_top ', d);
-
-    /*
-    //create div for review hide button
-    if (d.chapters === 1) {
-        $('<div>').insertAfter('.storytextp + div[style$=":5px"]').append('<button style="opacity:0;cursor:inherit;"></button>').after('<div style="height:5px"></div>');
-    }
-
-    $('<button class="btn review-hide">Review</button>').prependTo('div[style$=":5px"] + div').click(function () {
-        $('#review').toggle();
-        $('div[style$="15px"] + div').toggle();
-        $('#p_footer').toggle().get(0).scrollIntoView();
-        $(this).blur();
-    });
-    $('#review').hide();
-    $('div[style$="15px"] + div').hide();
-    $('#p_footer').hide();
-
-    $('body > div[style^="position"]').remove();*/
 }
 
 function groupPage() {
@@ -880,6 +860,7 @@ function setVisited(add, chap, id) {
     key = 'Read:' + id;
     getReadObj(key, function (readObj) {
         var storeObj = {};
+        //regular pageview
         if (accessed && add) {
             readObj.lastRead = Math.trunc(Date.now() * 0.00001);
         }
