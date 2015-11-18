@@ -430,15 +430,17 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
     storytextid = parseInt($('form[name="myselect"] script', d.data).html().match(/storytextid=(\d+)/)[1], 10);
     $('#review_review').attr('onclick', 'chapter=' + chapter + ',storytextid=' + storytextid + ',storyid=' + storyid);
 
-    //reset review form in case a review has been left
-    $('#review').show();
-    $('#review_success').hide();
-
     //to make abuse reports and community adds go to the right chapter and story
     $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + storyid);
 
     //to properly report pageviews to FF.net's stat-tracker
     $.get($('#storytextp', d.data).prev().html().match(/\/eye\/[^']+/)[0]);
+
+    //reset review form in case a review has been left
+    $('#review').show();
+    $('#review_success').hide();
+    $('#review_postbutton').html('Post Review as '+ document.cookie.match(/funn=([^;]+)/)[1]);
+    $('#review_postbutton').prop('disabled', false);
 }
 
 function setUpBookshelfBar(container, storyData) {
