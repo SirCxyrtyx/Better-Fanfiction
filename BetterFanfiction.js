@@ -1100,7 +1100,6 @@ function createStoryCard(data, storyid, index, byComplete) {
                         '<span class="content_rating">' + d.rating + '</span>' +
                         '<a class="story_link" data-original="' + d.storyid + '">' + d.title + '</a>' +
                         '<span class="status"></span></h2><div class="story-card-content">' +
-                        '<img src="' + d.storyImageLink + '" class="story_image">' +
                         '<span class="short_description">' + d.description +
                         '<span class="by">&nbsp;<b>·</b>&nbsp;' + d.authorElement +
                         '</span></span></div><span class="info"></span></div></div></li>');
@@ -1109,8 +1108,8 @@ function createStoryCard(data, storyid, index, byComplete) {
     storyCard.find('.story_link').click(storyLinkClick);
 
     //no image
-    if (!d.storyImageLink) {
-        storyCard.find('img').remove();
+    if (d.storyImageLink && pageType !== 'popup') {
+        storyCard.find('.story-card-content').prepend('<img src="https:' + d.storyImageLink + '" class="story_image">');
     }
 
     //rating
