@@ -259,6 +259,7 @@
 
 body {
     overflow: visible !important;
+    background-color: #EEEEEE!important;
 }
 
 .xmenu_item a {
