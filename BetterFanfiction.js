@@ -200,7 +200,7 @@ function groupPage() {
         });
     });
 
-    $('div + hr').before('Include: <input type="text" class="story-filter"> Exclude: <input type="text" class="story-filter">');
+    $('div + hr').before('Include: <input type="text" class="story-filter"> Exclude: <input type="text" class="story-filter"><span class="badge">0</span>');
     $('.story-filter').on('input', function () {
         $('.z-list').show().filter(function () {
             var exclude;
@@ -213,6 +213,7 @@ function groupPage() {
             }
             return false;
         }).hide();
+        $('.badge').html($('.z-list:visible').length);
     });
 }
 
