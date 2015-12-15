@@ -930,3 +930,10 @@ span.control-label {
 .panel-body {
     padding: 15px;
 }
+
+/*
+ * Private messages
+ */
+.bubbledNNormal {
+    min-height: 54px;
+}
