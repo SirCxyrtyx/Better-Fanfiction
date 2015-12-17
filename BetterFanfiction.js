@@ -224,58 +224,43 @@ function userPage() {
     //triggers image loading on tab switch
     //$('#mytab a').click(() => setTimeout($(window).trigger(), 100, 'resize'));
 
-    $('#st > div').eq(0).after('Include: <input type="text" class="my-filter"> Exclude: <input type="text" class="my-filter">');
-    $('.my-filter').on('input', function () {
-        $('.mystories').show().filter(function () {
-            var exclude;
-            if ($(this).find('.xgray').html().search($('.my-filter').eq(0).val()) === -1) {
-                return true;
-            }
-            exclude = $('.my-filter').eq(1).val();
-            if (exclude) {
-                return $(this).find('.xgray').html().search(exclude) !== -1;
-            }
-            return false;
-        }).hide();
-        $('#l_st .badge').html($('.mystories:visible').length);
-    });
+    [{id:'st', class: '.mystories'}, {id:'fs', class: '.favstories'}].forEach(function (val, i) {
+        $('#' + val.id + ' > div').eq(0).after('Include: <input type="text" class="' + val.id + '-filter"> Exclude: <input type="text" class="' + val.id + '-filter">');
+        $('.' + val.id + '-filter').on('input', function () {
+            $(val['class']).show().filter(function () {
+                var exclude;
+                if ($(this).find('.xgray').html().search($('.' + val.id + '-filter').eq(0).val()) === -1) {
+                    return true;
+                }
+                exclude = $('.' + val.id + '-filter').eq(1).val();
+                if (exclude) {
+                    return $(this).find('.xgray').html().search(exclude) !== -1;
+                }
+                return false;
+            }).hide();
+            $('#l_' + val.id + ' .badge').html($(val['class'] + ':visible').length);
+        });
+        $('#' + val.id + '_inside').addClass('stories-main').before('<div class="stories-side" ><div><div class="panel">' +
+                                                                        '<div class="panel fandoms-list">' +
+                                                                            '<div class="panel-heading">Fandoms</div>' +
+                                                                            '<div class="panel-body"></div>' +
+                                                                        '</div>' +
+                                                                   '</div></div></div>');
+        fandomsInList('#' + val.id).forEach(function (v, i) {
+            $('<label class="control" data-fandom="' + v.k + '">' +
+                '<input type="checkbox" checked>' +
+                '<span class="control-indicator"></span>' +
+                '<span class="control-label">' + v.k + ' (' + v.v + ')</span>' +
+            '</label>').appendTo('#' + val.id + ' .fandoms-list .panel-body').click(function (event) {
 
-    $('#fs > div').eq(0).after('Include: <input type="text" class="fav-filter"> Exclude: <input type="text" class="fav-filter">');
-    $('.fav-filter').on('input', function () {
-        $('.favstories').show().filter(function () {
-            var exclude;
-            if ($(this).find('.xgray').html().search($('.fav-filter').eq(0).val()) === -1) {
-                return true;
-            }
-            exclude = $('.fav-filter').eq(1).val();
-            if (exclude) {
-                return $(this).find('.xgray').html().search(exclude) !== -1;
-            }
-            return false;
-        }).hide();
-        $('#l_fs .badge').html($('.favstories:visible').length);
-    });
-
-    $('#st_inside').addClass('stories-main').before('<div class="stories-side" ><div><div class="panel">' +
-                                                        '<div class="panel fandoms-list">' +
-                                                            '<div class="panel-heading">Fandoms</div>' +
-                                                            '<div class="panel-body"></div>' +
-                                                        '</div>' +
-                                                   '</div></div></div>');
-    fandomsInList('#st').forEach(function (v, i) {
-        $('<label class="control" data-fandom="' + v.k + '">' +
-            '<input type="checkbox" checked>' +
-            '<span class="control-indicator"></span>' +
-            '<span class="control-label">' + v.k + ' (' + v.v + ')</span>' +
-        '</label>').appendTo('#st .fandoms-list .panel-body').click(function (event) {
-
-            var s = $('.mystories').filter((i,el) => JSON.parse(el.dataset.category).indexOf(this.dataset.fandom) !== -1);
-            if ($('input', this)[0].checked) {
-                s.show();
-            } else {
-                s.hide();
-            }
-            $('#l_st .badge').html($('.favstories:visible').length);
+                var s = $(val['class']).filter((i,el) => JSON.parse(el.dataset.category).indexOf(this.dataset.fandom) !== -1);
+                if ($('input', this)[0].checked) {
+                    s.show();
+                } else {
+                    s.hide();
+                }
+                $('#l_' + val.id + ' .badge').html($(val['class'] + ':visible').length);
+            });
         });
     });
 }
