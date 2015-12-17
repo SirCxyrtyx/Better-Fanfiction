@@ -104,8 +104,8 @@ function storyPage(data) {
                     '<p class="summary">' + d.description + '</p>' +
                     '<ul class="tags"></ul>' +
                  '</div>' +
-              '</div>' +
-           '</div>' + bookshelfBar + '</div>');
+              '</div>' + bookshelfBar +
+           '</div></div>');
 
     tags = el.find('.tags');
 
@@ -172,6 +172,9 @@ function storyPage(data) {
     $('#author-title > b').attr('data-original', storyid).click(storyLinkClick);
 
     setUpBookshelfBar('#profile_top ', d);
+
+    //bring a small degree of sanity to review box structure
+    $('#review > table').replaceWith($('#review > table > tbody > tr > td > div'));
 }
 
 function groupPage() {

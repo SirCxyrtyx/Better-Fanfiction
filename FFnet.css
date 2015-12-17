@@ -5,19 +5,9 @@
 #review {
   padding-top: 40px;    
 }
-  
-#review > table > tbody > tr > td {
-  display:none;
-}
-  
-#review > table > tbody > tr > td:last-child {
-  display: table-cell !important;
-}
-    
-#review > table > tbody > tr > td:last-child > div{
-  left: 50%;
-  position: relative;
-  margin-left: -350px;
+
+#review > div {
+  margin: auto;
 }
 
 #share_providers {
@@ -260,6 +250,11 @@
 body {
     overflow: visible !important;
     background-color: #EEEEEE!important;
+  min-width: initial !important;
+}
+
+.maxwidth {
+  min-width: initial !important;
 }
 
 .xmenu_item a {
