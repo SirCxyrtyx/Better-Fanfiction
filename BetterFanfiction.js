@@ -983,7 +983,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete) {
         if (val !== 0 && existing.indexOf(val) === -1) {
             $.get('https://www.fanfiction.net/s/' + val, function (data) {
                 wrapper.append(createStoryCard(data, val, i, byComplete));
-                //since get requests are async, this ensures alignSoryCards runs after every storyCard has been made.
+                //since get requests are async, this ensures alignStoryCards runs after every storyCard has been made.
                 count--;
                 if (count === 0) {
                     setTimeout(alignStoryCards, 100, wrapper);
@@ -1248,7 +1248,7 @@ function FanFictionAPI() {
             userid = x;
             chrome.storage.local.set({'userid': x});
         }
-    } });
+    }});
 
     //type = 'alert' || 'favorites'
     function readFFnetList(type, callback, index, list) {
@@ -1485,7 +1485,7 @@ function FanFictionAPI() {
         });
     }
 
-    //public
+    //read
     that.getBookshelves = function (callback) {
         chrome.storage.local.get('Bookshelves', function (items) {
             if (items.Bookshelves) {
@@ -1593,6 +1593,7 @@ function FanFictionAPI() {
         });
     };
 
+    //write
     that.removeFromRil = function (id, callback) {
         chrome.storage.local.get('ReadLater', function (items) {
             var index,

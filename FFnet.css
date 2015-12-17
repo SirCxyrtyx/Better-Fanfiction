@@ -3,7 +3,7 @@
 }
   
 #review {
-  padding-top: 40px;    
+  padding-top: 40px;  
 }
 
 #review > div {
@@ -21,7 +21,7 @@
 .loading-prev {
   margin: 0px 25px 0px 0px;
 }
-    
+  
 #profile_top {
   background-color: #282828;
   font-family: "Open Sans",Arial,Sans-serif;
@@ -37,32 +37,32 @@
   padding: 25px 0px 0px;
   position: relative;
 }
-    
+  
 #profile_top > .inner .image-container {
   display: table-cell;
   vertical-align: top;
   padding: 0px 20px;
   width: 0px;
 }
-    
+  
 #profile_top > .inner .image-container img {
   padding: 4px;
   background: #FFF;
   /*height: 269px;
-    width: 180px; */
+  width: 180px; */
   border-radius: 8px;
 }
-    
+  
 #profile_top > .inner .info-container {
   display: table-cell;
   vertical-align: top;
   width: 1300px;
 }
-    
+  
 #author-title{
   color: #FFF;
   font-family: "Open Sans Condensed",Arial,Sans-serif;
-    font-weight: bold;
+  font-weight: bold;
   line-height: normal;
   margin-top: -0.3em;
   position: relative;
@@ -72,7 +72,7 @@
 #author-title > b {
   cursor: pointer;
 }
-      
+    
 .author {
   font-size: 14px;
   font-family: "Open Sans",Arial,Sans-serif;
@@ -81,7 +81,7 @@
 }
 
 .author > a.xcontrast_txt {
-  color: inherit;    
+  color: inherit;  
 }
 
 .inner hr {
@@ -95,13 +95,13 @@
 .info-container > div > p {
   font-size: 14.4px;
   line-height: 25.9px;
-    text-align: justify;
+  text-align: justify;
 }
 
 .tags {
   margin: -3px;
   margin-top: 50px;
-    position: relative;
+  position: relative;
 }
 
 .tag-rating, .tag-genre, .tag-character {
@@ -162,13 +162,13 @@
   direction: rtl;
   list-style: disc;
   padding-left: 10px;
-    width: 140px;
-    margin-left: 0px;
+  width: 140px;
+  margin-left: 0px;
 }
 
 .info-container ol b, .info-container ol a {
   color: #FFF;
-    font-weight: bold;
+  font-weight: bold;
 }
 
 .bookshelves {
@@ -179,11 +179,11 @@
   text-decoration: none;
   line-height: 0;
   text-align: right;
-    list-style: none;
-    margin-right: 20px;
+  list-style: none;
+  margin-right: 7px;
   margin-bottom: -1px;
-    position: relative;
-    z-index: 10;
+  position: relative;
+  z-index: 10;
 }
 
 .bookshelves > li {
@@ -217,7 +217,7 @@
 .bookshelves > li.dropdown-toggle  {
   border-top-right-radius: 5px;
 }
-    
+  
 .bookshelves > li span {
   display: block;
   color: #777;
@@ -240,7 +240,7 @@
 }
   
 .top-margin-40 {
-    margin-top: 40px;
+  margin-top: 40px;
 }
 
 .review-hide {
@@ -248,8 +248,8 @@
 }
 
 body {
-    overflow: visible !important;
-    background-color: #EEEEEE!important;
+  overflow: visible !important;
+  background-color: #EEEEEE!important;
   min-width: initial !important;
 }
 
@@ -262,7 +262,7 @@ body {
 }
 
 .z-list .icon-chevron-right{
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .story-card-list * {
@@ -307,7 +307,7 @@ body {
   padding: 10px;
   vertical-align: top;
 }
-    
+
 .list_boxes .story-card {
   color: #555;
   background: #FFF;
@@ -315,7 +315,7 @@ body {
   border-left-color: #D6D1CB;
   border-top-color: #D6D1CB;
 }
-        
+
 .list_boxes .story-card h2 {
   display: block;
   padding-bottom: 5px;
@@ -323,7 +323,7 @@ body {
   border-bottom: 1px solid #DDD;
   font-size: 100%;
 }
-            
+
 .content_rating {
   padding: 0px 5px;
   vertical-align: middle;
@@ -339,22 +339,22 @@ body {
   line-height: 16px;
   margin-top: 1px;
 }
-                  
+
 .content_rating_teen {
   background-color: #FFB400;
   box-shadow: 0px 1px 0px #FFD800 inset;
 }
-                  
+
 .content_rating_everyone {
   background-color: #78AC40;
   box-shadow: 0px 1px 0px #90CE4C inset;
 }
-                    
+
 .content_rating_mature {
   background-color: #C03D2F;
   box-shadow: 0px 1px 0px #E64938 inset;
 }
-                    
+
 .story_link {
   font-family: "Open Sans Condensed",Arial,Sans-serif;
   color: inherit;
@@ -401,7 +401,7 @@ body {
   font-size: 0.9em;
   margin-bottom: 4px;
 }
-    
+  
 .story_category {
   color: #FFF !important;
   background-color: #974BFF !important;
@@ -409,7 +409,7 @@ body {
   text-shadow: -1px -1px #783CCC;
   border: 1px solid #803FD8;
 }
-        
+
 .story-card-list a.xcontrast_txt {
   color: #507E2C;
   text-decoration: none;
@@ -491,13 +491,13 @@ h4.modal-title {
   margin: 30px auto;
   width: 900px;
   font-family: "Open Sans",Arial,Sans-serif;
-    font-size: 16px;
-    /*-webkit-mask-box-image:  url('data:image/svg+xml;utf8,<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="142.0" width="142" height="142" id="svg2"><path d="M 6,0 C 2,2 2,2 0,6 L 0,136 C 2,140 2,140 6,142 L 135,142 C 140,140 140,140 142,135 L 142,7 C 140,2 140,2 135,0 z" id="rect2985" style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"/></svg>') 30 repeat; 
-    mask-border: url('data:image/svg+xml;utf8,<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="142.0" width="142" height="142" id="svg2"><path d="M 6,0 C 2,2 2,2 0,6 L 0,136 C 2,140 2,140 6,142 L 135,142 C 140,140 140,140 142,135 L 142,7 C 140,2 140,2 135,0 z" id="rect2985" style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"/></svg>')  30 repeat;*/
+  font-size: 16px;
+  /*-webkit-mask-box-image:  url('data:image/svg+xml;utf8,<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="142.0" width="142" height="142" id="svg2"><path d="M 6,0 C 2,2 2,2 0,6 L 0,136 C 2,140 2,140 6,142 L 135,142 C 140,140 140,140 142,135 L 142,7 C 140,2 140,2 135,0 z" id="rect2985" style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"/></svg>') 30 repeat; 
+  mask-border: url('data:image/svg+xml;utf8,<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="142.0" width="142" height="142" id="svg2"><path d="M 6,0 C 2,2 2,2 0,6 L 0,136 C 2,140 2,140 6,142 L 135,142 C 140,140 140,140 142,135 L 142,7 C 140,2 140,2 135,0 z" id="rect2985" style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"/></svg>')  30 repeat;*/
 }
 
 #story_landing .modal-body {
-    max-height: 10000px;
+  max-height: 10000px;
 }
 
 .story_content_box a.chapter_link {
@@ -509,7 +509,7 @@ h4.modal-title {
 .story_content_box a:hover {
   color: #609734;
   text-decoration: underline;
-    border: initial;
+  border: initial;
 }
 
 .story_content_box .tag-character {
@@ -598,7 +598,7 @@ h4.modal-title {
   border-top: 1px solid #DDD;
   margin-top: 10px;
   font-size: 1.1em;
-      list-style: none;
+    list-style: none;
 }
 
 .story_container ul.chapters .chapter_expander {
@@ -650,16 +650,16 @@ h4.modal-title {
   line-height: 16px;
   color: #FFF;
   margin-right: 5px;
-    float: none;
+  float: none;
 }
 
 .story_container ul.chapters li .word_count {
-    font-weight: normal;
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    margin-top: -10px;
-    font-family: 'Open Sans', Arial, sans-serif;
+  font-weight: normal;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  margin-top: -10px;
+  font-family: 'Open Sans', Arial, sans-serif;
 }
 
 .story_container .extra_story_data {
@@ -691,9 +691,9 @@ h4.modal-title {
 }
 
 .date_approved span, .last_modified span {
-    line-height: 14px;
-    font-size: 11px;
-    font-family: 'Open Sans', Arial, sans-serif;
+  line-height: 14px;
+  font-size: 11px;
+  font-family: 'Open Sans', Arial, sans-serif;
 }
 
 .date_approved > div, .last_modified > div {
@@ -791,41 +791,41 @@ button.icon-heart {
 }
 
 .bookshelves .dropdown-menu {
-    left: initial;
-    right: 0;
-    min-width: 270.2px;
+  left: initial;
+  right: 0;
+  min-width: 270.2px;
 }
 
 .shelf {
-    font-size: 16.9px;
-    color: rgb(85, 85, 85);
-    height: 23px;
-    cursor: pointer;
+  font-size: 16.9px;
+  color: rgb(85, 85, 85);
+  height: 23px;
+  cursor: pointer;
 }
 
 .shelf:hover {
-    background-color: #3087d8;
-    color: white;
+  background-color: #3087d8;
+  color: white;
 }
 
 .shelf:hover i {
-    color: white;
+  color: white;
 }
 
 .shelf i {
-    float: right;
-    margin-right: 10px;
-    color: rgb(54, 165, 11);
+  float: right;
+  margin-right: 10px;
+  color: rgb(54, 165, 11);
 }
 
 .shelf span {
-    float: left;
-    margin-left: 10px;
+  float: left;
+  margin-left: 10px;
 }
 
 #bookshelf_tabs a[href="#"] {
-    padding-top: 3.5px;
-    padding-bottom: 2.5px;
+  padding-top: 3.5px;
+  padding-bottom: 2.5px;
 }
 
 /* 
@@ -845,17 +845,17 @@ td > div {
  */
 
 .stories-main {
-    position: relative;
-    /*width: 70%;
-    float: left;*/
+  position: relative;
+  /*width: 70%;
+  float: left;*/
 }
 
 .stories-side {
-    width: 30%;
-    position: relative;
-    float: right;
-    z-index: 1;
-    background-color: white;
+  width: 30%;
+  position: relative;
+  float: right;
+  z-index: 1;
+  background-color: white;
 }
 
 .stories-side > div {
@@ -867,36 +867,36 @@ td > div {
 }
 
 label.control {
-    width: 100%;
-    padding: 5px 0px;
-    position: relative;
-    margin-bottom: 2px;
+  width: 100%;
+  padding: 5px 0px;
+  position: relative;
+  margin-bottom: 2px;
 }
 
 label.control > input[type="checkbox"] {
-    opacity: 0;
+  opacity: 0;
 }
 
 .control input:checked ~ .control-indicator {
-    background-color: #519FFF;
+  background-color: #519FFF;
 }
 
 span.control-indicator {
-    border-radius: 2em;
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    background-color: #EAE9E9;
+  border-radius: 2em;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-color: #EAE9E9;
 }
 
 span.control-label {
-    position: absolute;
-    width: 100%;
-    text-align: center;
-    left: 0;
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  left: 0;
 }
 
 
@@ -905,30 +905,30 @@ span.control-label {
  */
 
 .panel {
-    border: 1px solid transparent;
-    border-radius: 4px;
-    border-color: #ddd;
-    margin-bottom: 5px;
-    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  border-color: #ddd;
+  margin-bottom: 5px;
+  box-shadow: 0 1px 1px rgba(0,0,0,.05);
 }
 
 .panel-heading {
-    color: #333;
-    background-color: #f5f5f5;
-    border-color: #ddd;
-    padding: 10px 15px;
-    border-bottom: 1px solid #ddd;
-    border-top-left-radius: 3px;
-    border-top-right-radius: 3px;
+  color: #333;
+  background-color: #f5f5f5;
+  border-color: #ddd;
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
 }
 
 .panel-body {
-    padding: 15px;
+  padding: 15px;
 }
 
 /*
  * Private messages
  */
 .bubbledNNormal {
-    min-height: 54px;
+  min-height: 54px;
 }
