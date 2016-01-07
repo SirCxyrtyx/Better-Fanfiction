@@ -1155,19 +1155,23 @@ function alignStoryCards(cardList) {
         diff;
 
     cards.sort(function (a, b) {
-        return $(a).attr('data-order') - $(b).attr('data-order');
+        return $(a).data('order') - $(b).data('order');
     });
-    for (let i = 1; i < cards.length; i += 2) {
-        el1 = cards.eq(i - 1);
-        el2 = cards.eq(i);
+    for (let i = 0; i < cards.length; i += 2) {
+        el1 = cards.eq(i);
+        el2 = cards.eq(i + 1);
 
-        diff = Math.abs(el1.find('.story-card').height() - el2.find('.story-card').height());
-        if (el1.find('.story-card').height() > el2.find('.story-card').height()) {
-            el2.find('.story-card-content').css('padding-bottom', diff + 'px');
+        if(el2.length){
+            diff = el1.find('.story-card').height() - el2.find('.story-card').height();
+            if (diff > 0) {
+                el2.find('.story-card-content').css('padding-bottom', diff + 'px');
+            } else if (diff < 0){
+                el1.find('.story-card-content').css('padding-bottom', -diff + 'px');
+            }
+        //last one has no counterpart, remove any padding
         } else {
-            el1.find('.story-card-content').css('padding-bottom', diff + 'px');
+            el1.find('.story-card-content').css('padding-bottom', '0px');
         }
-
     }
 }
 
