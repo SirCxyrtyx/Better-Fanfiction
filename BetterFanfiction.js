@@ -643,16 +643,28 @@ function setUpBookshelves() {
         $('#shelf-select').change(function (e) {
             var target = e.target,
                 tabId = '#shelf_tab_' + target.selectedOptions[0].dataset.id;
-            if (!$(tabId).hasClass('populated')) {
-                ffAPI.bookshelf.get(target.selectedOptions[0].dataset.id, function (list) {
-                    populateBookshelf(list, $(tabId));
-                    $(tabId).addClass('populated');
-                });
+            if (target.value !== '--') {
+                if (!$(tabId).hasClass('populated')) {
+                    ffAPI.bookshelf.get(target.selectedOptions[0].dataset.id, function (list) {
+                        populateBookshelf(list, $(tabId));
+                        $(tabId).addClass('populated');
+                    });
+                }
+                $(this).parent().tab('show');
+                $('#bookshelf_display .tab-content .active').removeClass('active');
+                $(tabId).addClass('active');
             }
-            $(this).parent().tab('show');
-            $('#bookshelf_display .tab-content .active').removeClass('active');
-            $(tabId).addClass('active');
             $(this).blur();
+        });
+
+        $('a[href="#shelf_tab"]').click(function () {
+            if ($('#shelf-select')[0].value !== '--') {
+                $(this).tab('show');
+                $('#bookshelf_display .tab-content .active').removeClass('active');
+                $('#shelf_tab_' + $('#shelf-select')[0].selectedOptions[0].dataset.id).addClass('active');
+            } else {
+                $(this).blur();
+            }
         });
     });
 
