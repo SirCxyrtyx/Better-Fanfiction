@@ -984,7 +984,17 @@ function populateBookshelf(storyIds, bookshelf, byComplete) {
                 }
             });
         } else {
+            //re-order existing stories based on updated list
+            if (existing.includes(val)) {
+                let el = wrapper.find('li[data-story="' + val + '"]'),
+                    index = el.find('.status-complete').length ? i : i + 10000;
+                el[0].dataset.order = index;
+                el.css('order', index);
+            }
             count--;
+            if (count === 0) {
+                setTimeout(alignStoryCards, 100, wrapper);
+            }
         }
     });
 }
