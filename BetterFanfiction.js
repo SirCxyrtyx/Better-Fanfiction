@@ -179,21 +179,18 @@ function storyPage(data) {
 
 function groupPage() {
     $('<button class="btn">Load All</button>').insertAfter('form[name="myform"]').click(function (event) {
-        var pathMatch;
+        var pathParts = [],
+            form = $('form[name="myform"]')[0];
 
-        if (path.search(/\d\d\d+\/\d/) !== -1) {
-            pathMatch = path.match(/(.+\d\d\d+\/\d+\/\d+\/)\d+(\/\d+\/\d+\/\d+\/\d+\/)/);
-        } else {
-            pathMatch = [path];
-            pathMatch[1] = path + '99/0/';
-            pathMatch[2] = '/0/0/0/0/';
-        }
+        pathParts[0] = path.match(/\/community\/.+?\/\d+/) + '/' + form.censorid.value + '/' + form.s.value + '/';
+        pathParts[1] = '/' + form.genreid.value + '/' + form.len.value + '/' + form.statusid.value + '/' + form.timeid.value + '/';
 
         $('.z-list').remove();
         $('center').remove();
         $('hr + script').after('<img width="64" height="64" class="spinner" src="' + chrome.extension.getURL('spinner.gif') + '" />');
 
-        ffAPI.getGroupStories(pathMatch, function (list) {
+        ffAPI.getGroupStories(pathParts, function (list) {
+            //inserts stories and removes spinner
             $('img.spinner').after(list).remove();
             $('img.lazy').lazyload();
             convertStoryLinks();
@@ -1559,16 +1556,16 @@ function FanFictionAPI() {
         });
     };
 
-    that.getGroupStories = function (pathMatch, callback, index, list) {
+    that.getGroupStories = function (pathParts, callback, index, list) {
         list = typeof list !== 'undefined' ? list : [];
         index = typeof index !== 'undefined' ? index : 1;
 
-        $.get('https://www.fanfiction.net' + pathMatch[1] + index + pathMatch[2],
+        $.get('https://www.fanfiction.net' + pathParts[0] + index + pathParts[1],
             function (data) {
                 list = list.concat($('.z-list', data).toArray());
 
                 if (data.search('Next &#187;') !== -1) {
-                    that.getGroupStories(pathMatch, callback, index + 1, list);
+                    that.getGroupStories(pathParts, callback, index + 1, list);
                 } else {
                     callback(list);
                 }
