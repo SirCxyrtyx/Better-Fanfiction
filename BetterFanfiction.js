@@ -29,6 +29,8 @@ if (path.search(/\/s\//) !== -1) {
     pageType = 'review';
 } else if (path.search(/\/community\//) !== -1) {
     pageType = 'group';
+} else if (path === '/popup.html'){
+    pageType = 'popup';
 }
 
 //Signed-in check
@@ -55,17 +57,20 @@ function run() {
         convertStoryLinks();
         //$('body > div.zmenu').affix({offset: {top: 30}});
     }
-    //remove ad bar.
-    $('.zmenu').has('ins').remove();
 
-    $(window).on('popstate', function (e) {
-        if (e.originalEvent.state !== null) {
-            $.get('https://www.fanfiction.net/s/' + storyid + '/' + e.originalEvent.state.chapter, function (data) {
-                loadChapterInPlace(parseStoryData(data, storyid), e.originalEvent.state.chapter, false, true);
-                $('body').scrollTop(e.originalEvent.state.scrollPos);
-            });
-        }
-    });
+    if (pageType !== 'popup'){
+        //remove ad bar.
+        $('.zmenu').has('ins').remove();
+
+        $(window).on('popstate', function (e) {
+            if (e.originalEvent.state !== null) {
+                $.get('https://www.fanfiction.net/s/' + storyid + '/' + e.originalEvent.state.chapter, function (data) {
+                    loadChapterInPlace(parseStoryData(data, storyid), e.originalEvent.state.chapter, false, true);
+                    $('body').scrollTop(e.originalEvent.state.scrollPos);
+                });
+            }
+        });
+    }
 
     setUpBookshelves();
 
@@ -592,30 +597,35 @@ function setUpBookshelfBar(container, storyData) {
 }
 
 function setUpBookshelves() {
-    $('<div class="modal fade hide" id="bookshelf_display" style="display: none;">' +
-        '<div class="modal-header">' +
-        '<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>' +
-        '<h4 class="modal-title">Bookshelves</h4></div>' +
-       '<div class="modal-body"><div role="tabpanel">' +
-        '<ul class="nav nav-tabs" role="tablist" id="bookshelf_tabs">' +
-            '<li role="presentation"><a href="#ril_tab" role="tab" data-toggle="tab">Read It Later</a></li>' +
-            '<li role="presentation"><a href="#fav_tab" role="tab">Favorites</a></li>' +
-            '<li role="presentation"><a href="#track_tab" role="tab">Following</a></li>' +
-            '<li role="presentation"><a href="#liked_tab" role="tab">Liked</a></li>' +
-            '<li role="presentation"><a href="#alsoliked_tab" role="tab">Also Liked</a></li>' +
-            '<li role="presentation"><a href="#read_tab" role="tab">Read</a></li>' +
-            '<li role="presentation"><a href="#" role="tab">Shelves: <select id="fandom-select"></select><select id="shelf-select"><option id="default-shelf">--</option></select></a></li>' +
-        '</ul><div class="tab-content">' +
-            '<div role="tabpanel" class="tab-pane" id="ril_tab"><ul class="story-card-list list_boxes"></ul></div>' +
-            '<div role="tabpanel" class="tab-pane" id="fav_tab"><ul class="story-card-list list_boxes"></ul></div>' +
-            '<div role="tabpanel" class="tab-pane" id="track_tab"><ul class="story-card-list list_boxes"></ul></div>' +
-            '<div role="tabpanel" class="tab-pane" id="liked_tab"><ul class="story-card-list list_boxes"></ul></div>' +
-            '<div role="tabpanel" class="tab-pane" id="alsoliked_tab"><ul class="story-card-list list_boxes"></ul></div>' +
-            '<div role="tabpanel" class="tab-pane" id="read_tab"><ul class="story-card-list list_boxes"></ul></div>' +
-        '</div></div></div><div class="modal-footer"></div></div>').appendTo('body');
+    if (pageType !== 'popup') {
+        $('<div class="modal fade hide" id="bookshelf_display" style="display: none;">' +
+            '<div class="modal-header">' +
+            '<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>' +
+            '<h4 class="modal-title">Bookshelves</h4></div>' +
+           '<div class="modal-body"><div role="tabpanel">' +
+            '<ul class="nav nav-tabs" role="tablist" id="bookshelf_tabs">' +
+                '<li role="presentation"><a href="#ril_tab" role="tab" data-toggle="tab">Read It Later</a></li>' +
+                '<li role="presentation"><a href="#fav_tab" role="tab">Favorites</a></li>' +
+                '<li role="presentation"><a href="#track_tab" role="tab">Following</a></li>' +
+                '<li role="presentation"><a href="#liked_tab" role="tab">Liked</a></li>' +
+                '<li role="presentation"><a href="#alsoliked_tab" role="tab">Also Liked</a></li>' +
+                '<li role="presentation"><a href="#read_tab" role="tab">Read</a></li>' +
+                '<li role="presentation"><a href="#shelf_tab" role="tab">Shelves: <select id="fandom-select"></select><select id="shelf-select"><option id="default-shelf">--</option></select></a></li>' +
+            '</ul><div class="tab-content">' +
+                '<div role="tabpanel" class="tab-pane" id="ril_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+                '<div role="tabpanel" class="tab-pane" id="fav_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+                '<div role="tabpanel" class="tab-pane" id="track_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+                '<div role="tabpanel" class="tab-pane" id="liked_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+                '<div role="tabpanel" class="tab-pane" id="alsoliked_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+                '<div role="tabpanel" class="tab-pane" id="read_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+            '</div></div></div><div class="modal-footer"></div></div>').appendTo('body');
 
+        $('<div class="xmenu_item"><a class="show-bookshelves-popup">Bookshelves</a></div>').appendTo('.zui tr > td:nth-child(1)');
 
-    $('<div class="xmenu_item"><a class="show-bookshelves-popup">Bookshelves</a></div>').appendTo('.zui tr > td:nth-child(1)');
+        $('.show-bookshelves-popup').click(function () {
+            $('#bookshelf_display').modal().css('display', 'block').addClass('in');
+        });
+    }
 
     ffAPI.getBookshelves(function (shelves) {
         var fandoms = [];
@@ -688,10 +698,6 @@ function setUpBookshelves() {
     } else {
         $('#bookshelf_tabs > li').has('a[href="#alsoliked_tab"]').hide();
     }
-
-    $('.show-bookshelves-popup').click(function () {
-        $('#bookshelf_display').modal().css('display', 'block').addClass('in');
-    });
 
     $('#bookshelf_tabs a[href="#ril_tab"]').click(function (e) {
         e.preventDefault();

@@ -4,7 +4,7 @@ a {
 }
 
 body {
-    width: 780px !important;
+    width: 796px !important;
 }
 
 .story-card-list {
@@ -26,7 +26,7 @@ body {
     background-color: #eee
 }
 
-.nav-tabs:before,.nav-pills:before,.nav-tabs:after,.nav-pills:after {
+.nav-tabs:before, .nav-pills:before, .nav-tabs:after, .nav-pills:after {
     display: table;
     line-height: 0;
     content: ""
@@ -97,4 +97,60 @@ body {
     text-decoration: none;
     cursor: default;
     background-color: transparent
+}
+
+select {
+    display: inline-block;
+    height: 30px;
+    line-height: 30px;
+    padding: 4px 6px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #555;
+    vertical-align: middle;
+    border-radius: 4px;
+}
+
+.toast {
+    border: 2px solid #ccc;
+    position: fixed;
+    padding: 10px;
+    color: white;
+    z-index: 99999;
+    display: none;
+    background-color: rgba(0,0,0,0.8);
+    border-radius: 4px;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    z-index: 1000;
+    display: none;
+    float: left;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    list-style: none;
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);\
+    background-clip: padding-box;
+}
+
+.open>.dropdown-menu {
+    display: block;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #E4E4E4;
+    border-radius: 2px;
+}
+
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+#story_landing {
+    width: 900px;
 }
