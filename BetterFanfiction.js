@@ -604,7 +604,7 @@ function setUpBookshelves() {
             '<li role="presentation"><a href="#liked_tab" role="tab">Liked</a></li>' +
             '<li role="presentation"><a href="#alsoliked_tab" role="tab">Also Liked</a></li>' +
             '<li role="presentation"><a href="#read_tab" role="tab">Read</a></li>' +
-            '<li role="presentation"><a href="#" role="tab">Shelves: <select id="fandom-select"></select><select id="shelf-select"><option id="default-shelf">--</option></select></a></li>' +
+            '<li role="presentation"><a href="#shelf_tab" role="tab">Shelves: <select id="fandom-select"></select><select id="shelf-select"><option id="default-shelf">--</option></select></a></li>' +
         '</ul><div class="tab-content">' +
             '<div role="tabpanel" class="tab-pane" id="ril_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="fav_tab"><ul class="story-card-list list_boxes"></ul></div>' +
