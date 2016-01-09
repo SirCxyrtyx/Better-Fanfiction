@@ -51,6 +51,7 @@ function run() {
         storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
     } else {
         convertStoryLinks();
+        //$('body > div.zmenu').affix({offset: {top: 30}});
     }
     //remove ad bar.
     $('.zmenu').has('ins').remove();
@@ -623,8 +624,10 @@ function setUpBookshelves() {
             .append('<div role="tabpanel" class="tab-pane" id="shelf_tab_' + val.id + '"><ul class="story-card-list list_boxes"></ul></div>');
 
             val.fandom.forEach(function (item) {
+                //add to the list of fandoms that have shelves
                 if (fandoms.indexOf(item) === -1) {
                     fandoms.push(item);
+                //if the fandom is already in the list, then there is more than one shelf, and the default(--) needs to be displayed to prevent auto-selecting a shelf
                 } else {
                     if (!$('#default-shelf').hasClass(item.replace(/[^_a-zA-Z-]/g, ''))) {
                         $('#default-shelf').addClass(item.replace(/[^_a-zA-Z-]/g, ''));
@@ -965,7 +968,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete) {
         existing = Array.from(wrapper.children(), el => parseInt(el.dataset.story, 10));
         //remove from bookshelf any stories not on new list
         existing.forEach(function (val) {
-            if (storyIds.indexOf(val) === -1) {
+            if (!storyIds.includes(val)) {
                 $('li[data-story="' + val + '"]', wrapper).remove();
             }
         });
@@ -974,7 +977,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete) {
     }
     storyIds.forEach(function (val, i) {
         //add stories that aren't on bookshelf already
-        if (val !== 0 && existing.indexOf(val) === -1) {
+        if (val !== 0 && !existing.includes(val)) {
             $.get('https://www.fanfiction.net/s/' + val, function (data) {
                 wrapper.append(createStoryCard(data, val, i, byComplete));
                 //since get requests are async, this ensures alignStoryCards runs after every storyCard has been made.
