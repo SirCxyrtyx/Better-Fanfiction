@@ -1,0 +1,241 @@
+.tags {
+    position: initial;
+    margin: initial;
+}
+
+html > body {
+    color: #2a2a2a !important;
+    background-color: initial !important;
+}
+
+.share > a.modal.modal-attached {
+    z-index: initial;
+}
+
+.story-card-list {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.nav {
+    margin-left: 0;
+    list-style: none
+}
+
+.nav>li>a {
+    display: block
+}
+
+.nav>li>a:hover,.nav>li>a:focus {
+    text-decoration: none;
+    background-color: #eee
+}
+
+.nav-tabs:before, .nav-pills:before, .nav-tabs:after, .nav-pills:after {
+    display: table;
+    line-height: 0;
+    content: ""
+}
+
+.nav-tabs:after,.nav-pills:after {
+    clear: both
+}
+
+.nav-tabs>li,.nav-pills>li {
+    float: left
+}
+
+.nav-tabs>li>a,.nav-pills>li>a {
+    padding-right: 12px;
+    padding-left: 12px;
+    margin-right: 2px;
+    line-height: 14px
+}
+
+.nav-tabs {
+    border-bottom: 1px solid #ddd
+}
+
+.nav-tabs>li {
+    margin-bottom: -1px
+}
+
+.nav-tabs>li>a {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    line-height: 20px;
+    border: 1px solid transparent;
+    -webkit-border-radius: 4px 4px 0 0;
+    -moz-border-radius: 4px 4px 0 0;
+    border-radius: 4px 4px 0 0
+}
+
+.nav-tabs>li>a:hover,.nav-tabs>li>a:focus {
+    border-color: #eee #eee #ddd
+}
+
+.nav-tabs>.active>a,.nav-tabs>.active>a:hover,.nav-tabs>.active>a:focus {
+    color: #555;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent
+}
+
+.tab-content {
+    overflow: auto
+}
+
+.tab-content>.tab-pane,.pill-content>.pill-pane {
+    display: none
+}
+
+.tab-content>.active,.pill-content>.active {
+    display: block
+}
+
+.nav>.disabled>a {
+    color: #999
+}
+
+.nav>.disabled>a:hover,.nav>.disabled>a:focus {
+    text-decoration: none;
+    cursor: default;
+    background-color: transparent
+}
+
+select {
+    display: inline-block;
+    height: 30px;
+    line-height: 30px;
+    padding: 4px 6px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    color: #555;
+    vertical-align: middle;
+    border-radius: 4px;
+}
+
+.toast {
+    border: 2px solid #ccc;
+    position: fixed;
+    padding: 10px;
+    color: white;
+    z-index: 99999;
+    display: none;
+    background-color: rgba(0,0,0,0.8);
+    border-radius: 4px;
+}
+
+/*
+ *  Bootstrap modal
+ */
+
+.modal-open {
+  overflow: hidden;
+}
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1050;
+  display: none;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+  outline: 0;
+  background-color: #fff;
+  border-radius: 6px;
+}
+.modal.fade .modal-dialog {
+  -webkit-transition: -webkit-transform .3s ease-out;
+       -o-transition:      -o-transform .3s ease-out;
+          transition:         transform .3s ease-out;
+  -webkit-transform: translate(0, -25%);
+      -ms-transform: translate(0, -25%);
+       -o-transform: translate(0, -25%);
+          transform: translate(0, -25%);
+}
+.modal.in .modal-dialog {
+  -webkit-transform: translate(0, 0);
+      -ms-transform: translate(0, 0);
+       -o-transform: translate(0, 0);
+          transform: translate(0, 0);
+}
+.modal-open .modal {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 10px;
+}
+.modal-content {
+  position: relative;
+  background-color: #fff;
+  -webkit-background-clip: padding-box;
+          background-clip: padding-box;
+  border: 1px solid #999;
+  border: 1px solid rgba(0, 0, 0, .2);
+  border-radius: 6px;
+  outline: 0;
+  -webkit-box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
+          box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #000;
+}
+.modal-backdrop.fade {
+  opacity: 0;
+}
+.modal-backdrop.in {
+  opacity: 1;
+  background-color: rgba(0,0,0,0.8);
+}
+.modal-header {
+  padding: 15px;
+  border-bottom: 1px solid #e5e5e5;
+}
+.modal-header .close {
+  margin-top: -2px;
+  float: right;
+}
+.modal-title {
+  margin: 0;
+  line-height: 1.42857143;
+}
+.modal-body {
+  position: relative;
+  padding: 15px;
+  overflow-y: auto;
+}
+.modal-footer {
+  padding: 15px;
+  text-align: right;
+  border-top: 1px solid #e5e5e5;
+}
+.modal-footer .btn + .btn {
+  margin-bottom: 0;
+  margin-left: 5px;
+}
+.modal-footer .btn-group .btn + .btn {
+  margin-left: -1px;
+}
+.modal-footer .btn-block + .btn-block {
+  margin-left: 0;
+}
+.modal-scrollbar-measure {
+  position: absolute;
+  top: -9999px;
+  width: 50px;
+  height: 50px;
+  overflow: scroll;
+}

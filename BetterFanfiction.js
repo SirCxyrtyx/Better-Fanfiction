@@ -29,16 +29,19 @@ if (path.search(/\/s\//) !== -1) {
     pageType = 'review';
 } else if (path.search(/\/community\//) !== -1) {
     pageType = 'group';
+} else if (path.search(/\/works\//) !== -1) {
+    pageType = 'Ao3story';
 }
 
 //Signed-in check
-if (document.cookie.search('funn=') === -1 && path !== '/login.php') {
+if (document.cookie.search('funn=') === -1 && path !== '/login.php' && !pageType.startsWith('Ao3')) {
     document.addEventListener('DOMContentLoaded', function () {
         $.toast('You\'re not logged in.', 2500);
     });
 } else {
     ffAPI.userid = -1;
 }
+
 document.addEventListener('DOMContentLoaded', run);
 
 function run() {
@@ -55,6 +58,7 @@ function run() {
         convertStoryLinks();
         //$('body > div.zmenu').affix({offset: {top: 30}});
     }
+
     //remove ad bar.
     $('.zmenu').has('ins').remove();
 
@@ -84,7 +88,7 @@ function run() {
 }
 
 function storyPage(data) {
-    var d = data || parseStoryData($('html'), storyid),
+    var d = data || parseFFnStoryData('html', storyid),
         hasImage = !!d.storyImageLink,
         imageSource = hasImage ? d.storyImageLink.substr(0, d.storyImageLink.length - 3) + '180/' : '',
         el,
@@ -294,7 +298,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-next').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
-            loadChapterInPlace(parseStoryData(data, storyid), chapter + 1, false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter + 1, false);
         });
         $(this).blur();
     });
@@ -303,7 +307,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-next').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
-            loadChapterInPlace(parseStoryData(data, storyid), chapter + 1);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter + 1);
         });
         $(this).blur();
     });
@@ -312,7 +316,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-prev').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
-            loadChapterInPlace(parseStoryData(data, storyid), chapter - 1, false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter - 1, false);
         });
         $(this).blur();
     });
@@ -321,7 +325,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-prev').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
-            loadChapterInPlace(parseStoryData(data, storyid), chapter - 1);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter - 1);
         });
         $(this).blur();
     });
@@ -331,7 +335,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-select').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
-            loadChapterInPlace(parseStoryData(data, storyid), target.selectedIndex + 1, false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), target.selectedIndex + 1, false);
         });
         $(this).blur();
     });
@@ -341,7 +345,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-select').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
-            loadChapterInPlace(parseStoryData(data, storyid), target.selectedIndex + 1);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), target.selectedIndex + 1);
         });
         $(this).blur();
     });
@@ -614,8 +618,14 @@ function setUpBookshelves() {
             '<div role="tabpanel" class="tab-pane" id="read_tab"><ul class="story-card-list list_boxes"></ul></div>' +
         '</div></div></div><div class="modal-footer"></div></div>').appendTo('body');
 
-
+    //FFnet
     $('<div class="xmenu_item"><a class="show-bookshelves-popup">Bookshelves</a></div>').appendTo('.zui tr > td:nth-child(1)');
+    //Ao3
+    $('<li><a class="show-bookshelves-popup">Bookshelves</a></li>').appendTo('#header > ul');
+
+    $('.show-bookshelves-popup').click(function () {
+        $('#bookshelf_display').modal().css('display', 'block').addClass('in');
+    });
 
     ffAPI.getBookshelves(function (shelves) {
         var fandoms = [];
@@ -673,25 +683,27 @@ function setUpBookshelves() {
         });
     });
 
-    if (pageType === 'story') {
+    if (pageType.endsWith('story') ) {
         $('#bookshelf_tabs a[href="#alsoliked_tab"]').click(function (e) {
             e.preventDefault();
             if (!$('#alsoliked_tab').hasClass('populated')) {
                 $('#alsoliked_tab').addClass('populated')
                     .append('<img width="64" height="64" title="" alt="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
-                ffAPI.getAlsoLiked(function (alObj) {
-                    populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
-                });
+                if (pageType.startsWith('Ao3')) {
+                    getAo3UsersBookmarks(Array.from($('p.kudos a[href^="/users"]'), e => e.href), function (alObj) {
+                        populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
+                    });
+                } else {
+                    ffAPI.getAlsoLiked(function (alObj) {
+                        populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
+                    });
+                }
             }
             $(this).tab('show');
         });
     } else {
         $('#bookshelf_tabs > li').has('a[href="#alsoliked_tab"]').hide();
     }
-
-    $('.show-bookshelves-popup').click(function () {
-        $('#bookshelf_display').modal().css('display', 'block').addClass('in');
-    });
 
     $('#bookshelf_tabs a[href="#ril_tab"]').click(function (e) {
         e.preventDefault();
@@ -807,7 +819,7 @@ function storyLinkClick(e) {
     var storyId = $(e.currentTarget).attr('data-original'),
         loadedStorys = $('#story_landing .story_container').hide();
     if (loadedStorys.filter('[data-id=' + storyId + ']').show().length === 0) {
-        $.get('https://www.fanfiction.net/s/' + storyId, function (data) {
+        $.get(getStoryLink(storyId), function (data) {
             populateStoryLanding(parseStoryData(data, storyId));
             $('#story_landing').modal().css('display', 'block').addClass('in');
 
@@ -834,14 +846,15 @@ function populateStoryLanding(d) {
 
     //rating
     switch (d.rating) {
+        case 'N':
+            el.find('.content_rating').remove();
+            break;
+        case 'E':
         case 'M':
             el.find('.content_rating').addClass('content_rating_mature');
             break;
         case 'T':
             el.find('.content_rating').addClass('content_rating_teen');
-            break;
-        case 'K+':
-            el.find('.content_rating').addClass('content_rating_everyone');
             break;
         default:
             el.find('.content_rating').addClass('content_rating_everyone');
@@ -980,7 +993,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete) {
     storyIds.forEach(function (val, i) {
         //add stories that aren't on bookshelf already
         if (val !== 0 && !existing.includes(val)) {
-            $.get('https://www.fanfiction.net/s/' + val, function (data) {
+            $.get(getStoryLink(val), function (data) {
                 wrapper.append(createStoryCard(data, val, i, byComplete));
                 //since get requests are async, this ensures alignStoryCards runs after every storyCard has been made.
                 count--;
@@ -1010,7 +1023,7 @@ function populateBookshelfAlt(stories, bookshelf) {
         count = part.length,
         loadBtn;
     part.forEach(function (val, i) {
-        $.get('https://www.fanfiction.net/s/' + val.k, function (data) {
+        $.get(getStoryLink(val.k), function (data) {
             wrapper.append(createStoryCard(data, val.k, -val.v, false));
             count--;
             if (count === 0) {
@@ -1029,7 +1042,17 @@ function populateBookshelfAlt(stories, bookshelf) {
     }
 }
 
-function parseStoryData(data, storyid) {
+function parseStoryData(data, storyid){
+    var d = $(data);
+
+    if(typeof storyid === 'string' && storyid.match(/\D/)){
+        return parseAo3StoryData(d, storyid);
+    } else {
+        return parseFFnStoryData(d, storyid);
+    }
+}
+
+function parseFFnStoryData(data, storyid) {
     var that = {},
         d = $(data),
         storyInfo = d.find('#profile_top .xgray').html(),
@@ -1105,6 +1128,64 @@ function parseStoryData(data, storyid) {
     return that;
 }
 
+function parseAo3StoryData(d, storyid) {
+    var that = {};
+
+    that.storyid = storyid;
+    that.title = d.find('.preface h2').html().trim();
+    that.rating = d.find('.rating .tag').html()[0];
+    that.storyLink = 'http://archiveofourown.org/works/' + storyid.slice(1);
+    that.description = d.find('.summary blockquote').html();
+    that.authorElement = d.find('.preface > h3 > a').removeClass('author').addClass('xcontrast_txt')[0].outerHTML;
+    that.published = d.find('dd.published').html();
+    that.updated = d.find('dd.status').html();
+    that.wordcount = d.find('dd.words').html();
+    //kudos
+    that.favs = d.find('dd.kudos').html();
+    //comments
+    that.reviews = d.find('dd.comments').html();
+    that.chapters = d.find('dd.chapters').html().match(/\d+/)[0];
+
+    //fandom(s)
+    that.fandom = [];
+    d.find('.fandom a').each(function(index, el) {
+        that.fandom.push($(el).html());
+    });
+
+    //category(s)
+    that.genres = [];
+    d.find('.category a').each(function(index, el) {
+        that.genres.push($(el).html());
+    });
+
+    //Completion
+    if (d.find('.status').length === 0 || d.find('dt.status').html() === 'Completed:') {
+        that.complete = true;
+    } else {
+        that.complete = false;
+    }
+    //characters
+    that.chars = [];
+    d.find('.character a').each(function(index, el) {
+        that.chars.push($(el).html());
+    });
+    let rels = [];
+    d.find('.relationship a').each(function(index, el) {
+        rels.push($(el).html());
+    });
+    rels.forEach(val => val.split(/\/|(?: &amp; )/).forEach(function (val){
+        var i = that.chars.indexOf(val);
+        if (i !== -1){
+            that.chars.splice(i, 1);
+        }
+    }));
+    that.chars = rels.concat(that.chars).join(', ');
+
+    that.data = d;
+
+    return that;
+}
+
 function createStoryCard(data, storyid, index, byComplete) {
     var d = parseStoryData(data, storyid),
         infoString,
@@ -1126,14 +1207,15 @@ function createStoryCard(data, storyid, index, byComplete) {
 
     //rating
     switch (d.rating) {
+        case 'N':
+            storyCard.find('.content_rating').remove();
+            break;
+        case 'E':
         case 'M':
             storyCard.find('.content_rating').addClass('content_rating_mature');
             break;
         case 'T':
             storyCard.find('.content_rating').addClass('content_rating_teen');
-            break;
-        case 'K+':
-            storyCard.find('.content_rating').addClass('content_rating_everyone');
             break;
         default:
             storyCard.find('.content_rating').addClass('content_rating_everyone');
@@ -1237,6 +1319,14 @@ function fandomsInList(listClass) {
         }
     }
     return list.sort((a, b) => b.v - a.v);
+}
+
+function getStoryLink(id) {
+    if (typeof id === 'string' && id.startsWith('a')) {
+        return 'http://archiveofourown.org/works/' + id.slice(1);
+    } else {
+        return 'https://www.fanfiction.net/s/' + id;
+    }
 }
 
 function FanFictionAPI() {
@@ -1927,6 +2017,64 @@ function easydate(unix) {
     } else {
         return month_short + ' ' + day + ', ' + year;
     }
+}
+
+function getAo3UsersBookmarks(users, callback) {
+    var list = [],
+        count = users.length;
+    users.forEach(function (val, i){
+        //Hardcoded Harry Potter Fandom id: 136512
+        getAo3BookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + '136512' + '&page=', function (l) {
+            list.push(...l);
+            count--;
+            if (count <= 0) {
+                let also = {};
+                list.forEach(function (item) {
+                    if (!also[item]) {
+                        also[item] = 1;
+                    } else {
+                        also[item] += 1;
+                    }
+
+                });
+                list = [];
+                for (let prop in also) {
+                    if (also.hasOwnProperty(prop)) {
+                        list.push({
+                            'k': prop,
+                            'v': also[prop]
+                        });
+                    }
+                }
+                console.log('Found ' + list.length + ' bookmarked stories.');
+                list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
+                console.log(list.length + ' of which were bookmarked by more than one person.');
+                if (list.length > 50) {
+                    list = list.filter((item, pos) => pos < 49 && item.v > 2);
+                }
+                callback({created: Date.now(), stories: list});
+                $('#alsoliked_tab > img').remove();
+            }
+        });
+    });
+}
+
+function getAo3BookmarksFromUser(url, callback, index, list) {
+    list = typeof list !== 'undefined' ? list : [];
+    index = typeof index !== 'undefined' ? index : 1;
+
+    $.get(url + index ,
+        function (data) {
+            list = list.concat(Array.from($(data).find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
+            if ($(data).find('.next a').length && index < 100) {
+                getAo3BookmarksFromUser(url, callback, index + 1, list);
+            } else {
+                callback(list);
+            }
+        },
+    'html').fail(function () {
+        callback([]);
+    });
 }
 
 })();

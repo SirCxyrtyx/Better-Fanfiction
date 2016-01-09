@@ -1,15 +1,15 @@
 {
   "manifest_version": 2,
 
-  "name": "Better Fanfiction.net",
-  "description": "Improves Fanfiction.net",
+  "name": "Better Fanfiction",
+  "description": "Improves Fanfiction.net and Archive Of Our Own",
   "version": "1.0",
 
   "permissions": [
     "storage",
     "unlimitedStorage",
     "https://www.fanfiction.net/",
-    "http://archiveofourown.org/"
+    "https://archiveofourown.org/"
   ],
 
   "browser_action": {
@@ -27,6 +27,12 @@
     {
       "matches": ["https://www.fanfiction.net/*"],
       "css": ["FFnet.css", "fonts.css"],
+      "js": ["jquery-2.1.4.min.js", "jquery plugins.js", "BetterFanfiction.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://archiveofourown.org/works/*"],
+      "css": ["FFnet.css", "fonts.css", "Ao3.css"],
       "js": ["jquery-2.1.4.min.js", "jquery plugins.js", "BetterFanfiction.js"],
       "run_at": "document_start"
     }
