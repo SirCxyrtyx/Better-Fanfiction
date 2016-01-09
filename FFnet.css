@@ -93,6 +93,36 @@
   color: inherit;
 }
 
+hr {
+  background: inherit !important;
+  background-image: -webkit-gradient(linear,left bottom,right bottom,color-stop(0,rgba(72, 54, 81, 0)),color-stop(0.15,rgba(72, 54, 81, 0.26)),color-stop(0.85,rgba(72, 54, 81, 0.26)),color-stop(1,rgba(72, 54, 81, 0))) !important;
+}
+
+.lc {
+  background: inherit !important;
+}
+
+.lc-left {
+  background: inherit !important;
+}
+
+.lc-wrapper {
+  margin-top: 0 !important;
+}
+
+.lc-wrapper:after {
+  border: none !important;
+}
+
+.storytextp {
+  -webkit-user-select: inherit !important;
+  padding-bottom: 20px !important;
+}
+
+#content_wrapper_inner > span {
+  margin-top: 10px;
+}
+
 .inner hr {
   height: 0px;
   border: none;

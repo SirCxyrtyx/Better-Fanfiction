@@ -20,6 +20,8 @@ var ffAPI = FanFictionAPI(),
 
 if (path.search(/\/s\//) !== -1) {
     pageType = 'story';
+    //personal storypage-specific css
+    $('html').append('<style type="text/css">html>body{background-color:#D0CBE8!important;color:#483651!important;}#content_wrapper{background-color:inherit!important;}#content_wrapper_inner{border:0px!important;}.storytext{line-height:29px!important;max-width:45em!important;text-align:justify!important;}#content_wrapper_inner div.lc-wrapper[style^="margin-top"]{display:none}</style>');
     storyid = parseInt(path.match(/\d+/), 10);
 } else if (path.search(/\/u\//) !== -1 || path.search(/\/~/) !== -1) {
     pageType = 'user';
