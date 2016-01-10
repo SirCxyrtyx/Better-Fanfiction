@@ -72,6 +72,22 @@ function run() {
 
     setUpBookshelves();
 
+    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        if (request.updated && request.updated === 'Read'){
+            let storyLanding = $('#story_landing .story_container[data-id=' + request.id + ']');
+            if (storyLanding.length) {
+                ffAPI.getReadObj(request.id, function (readObj) {
+                    var readChapters = readObj.chapters;
+                    $('.chapter-read-icon', storyLanding).each(function (index, element) {
+                        if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
+                            $(this).addClass('chapter-read');
+                        }
+                    });
+                });
+            }
+        }
+    });
+
     if (pageType === 'user') {
         userPage();
     } else if (pageType === 'review') {
@@ -943,7 +959,7 @@ function populateStoryLanding(d) {
     if (pageType === 'story') {
         el.find('.chapter_link').click(storyLinkClick);
     }
-    getReadObj(d.storyid, function (readObj) {
+    ffAPI.getReadObj(d.storyid, function (readObj) {
         var readChapters = readObj.chapters;
         $('.chapter-read-icon', el).each(function (index, element) {
             if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
@@ -982,17 +998,6 @@ function populateStoryLanding(d) {
     setUpBookshelfBar('.story_container[data-id=' + d.storyid + ']', d);
 }
 
-function getReadObj(storyId, callback) {
-    let key = 'Read:' + storyId;
-    chrome.storage.local.get(key, function (items) {
-        if (items[key]) {
-            callback(items[key]);
-        } else {
-            callback({chapters: [], lastRead: Math.trunc(Date.now() * 0.00001)});
-        }
-    });
-}
-
 function createTag(name, type) {
     if (type === 'rating') {
         switch (name) {
@@ -1023,7 +1028,7 @@ function setVisited(add, chap, id) {
     }
     chap = chap || chapter;
     key = 'Read:' + id;
-    getReadObj(id, function (readObj) {
+    ffAPI.getReadObj(id, function (readObj) {
         var storeObj = {};
         //regular pageview
         if (accessed && add) {
@@ -1045,6 +1050,7 @@ function setVisited(add, chap, id) {
         }
         storeObj[key] = readObj;
         chrome.storage.local.set(storeObj);
+        chrome.runtime.sendMessage({updated: 'Read', id});
     });
 }
 
@@ -1769,6 +1775,17 @@ function FanFictionAPI() {
             },
             'html').error(function () {
             $.toast('We are unable to process your request due to an network error. Please try again later.');
+        });
+    };
+
+    that.getReadObj = function (storyId, callback) {
+        let key = 'Read:' + storyId;
+        chrome.storage.local.get(key, function (items) {
+            if (items[key]) {
+                callback(items[key]);
+            } else {
+                callback({chapters: [], lastRead: Math.trunc(Date.now() * 0.00001)});
+            }
         });
     };
 
