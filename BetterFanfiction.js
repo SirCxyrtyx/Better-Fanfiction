@@ -48,12 +48,6 @@ function run() {
     if (pageType === 'story') {
         chapter = ($('select').length && $('select').get(0).selectedIndex) + 1;
         storyPage();
-        setVisited(true);
-        setUpStoryNav();
-        if (document.cookie.search('funn=') !== -1) {
-            ffAPI.userid = parseInt($('form[name="myselect"] script').html().match(/userid = (\d+)/)[1], 10);
-        }
-        storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
     } else {
         convertStoryLinks();
         //$('body > div.zmenu').affix({offset: {top: 30}});
@@ -63,10 +57,15 @@ function run() {
     $('.zmenu').has('ins').remove();
 
     $(window).on('popstate', function (e) {
-        if (e.originalEvent.state !== null) {
-            $.get('https://www.fanfiction.net/s/' + storyid + '/' + e.originalEvent.state.chapter, function (data) {
-                loadChapterInPlace(parseStoryData(data, storyid), e.originalEvent.state.chapter, false, true);
-                $('body').scrollTop(e.originalEvent.state.scrollPos);
+        let state = e.originalEvent.state;
+        if (state !== null) {
+            $.get('https://www.fanfiction.net/s/' + state.story + '/' + state.chapter, function (data) {
+                if (state.story === storyid) {
+                    loadChapterInPlace(parseStoryData(data, state.story), false, true);
+                } else {
+                    loadStoryInPlace(parseStoryData(data, state.story), true);
+                }
+                    $('body').scrollTop(state.scrollPos);
             });
         }
     });
@@ -87,9 +86,8 @@ function run() {
         .appendTo('body');
 }
 
-function storyPage(data) {
-    var d = data || parseFFnStoryData('html', storyid),
-        hasImage = !!d.storyImageLink,
+function createStoryHeader(d) {
+    var hasImage = !!d.storyImageLink,
         imageSource = hasImage ? d.storyImageLink.substr(0, d.storyImageLink.length - 3) + '180/' : '',
         el,
         tags,
@@ -161,7 +159,7 @@ function storyPage(data) {
     //Info list
     wordsEl = el.find('.info-list-words');
     if (d.reviews) {
-        wordsEl.before('<li class="info-list-reviews">Reviews <a href="/r/' + storyid + '/' + chapter + '">' + d.reviews + '</a></li>');
+        wordsEl.before('<li class="info-list-reviews">Reviews <a href="/r/' + d.storyid + '/' + d.currentChapter + '">' + d.reviews + '</a></li>');
     }
     if (d.chapters) {
         wordsEl.before('<li class="info-list-chapters">Chapters <b>' + d.chapters + '</b></li>');
@@ -173,15 +171,24 @@ function storyPage(data) {
         wordsEl.after('<li class="info-list-favs">Favs <b>' + d.favs + '</b></li>');
     }
 
+    return el;
+}
+
+function storyPage() {
+    let storyData = parseFFnStoryData('html', storyid);
+    let storyHeader = createStoryHeader(storyData);
     $('#profile_top').remove();
-    $('#content_parent').prepend(el);
-
-    $('#author-title > b').attr('data-original', storyid).click(storyLinkClick);
-
-    setUpBookshelfBar('#profile_top ', d);
-
+    $('#content_parent').prepend(storyHeader);
+    setUpBookshelfBar('#profile_top', storyData);
+    $('#author-title > b').attr('data-original', storyData.storyid).click(openStoryLanding);
     //bring a small degree of sanity to review box structure
     $('#review > table').replaceWith($('#review > table > tbody > tr > td > div'));
+    setVisited(true);
+    setUpStoryNav();
+    if (document.cookie.search('funn=') !== -1) {
+        ffAPI.userid = parseInt($('form[name="myselect"] script').html().match(/userid = (\d+)/)[1], 10);
+    }
+    storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
 }
 
 function groupPage() {
@@ -198,7 +205,8 @@ function groupPage() {
 
         ffAPI.getGroupStories(pathParts, function (list) {
             //inserts stories and removes spinner
-            $('img.spinner').after(list).remove();
+            $('img.spinner').after(list)
+                            .remove();
             $('img.lazy').lazyload();
             convertStoryLinks();
             $('span[data-xutime]').each(function (index, el) {
@@ -272,33 +280,33 @@ function userPage() {
 function setUpStoryNav() {
     var selectWidth;
     //remove original event-bindings
-    $('#chap_select ~ button').addClass('nav-next').removeAttr('onclick');
+    $('select[name="chapter"]').addClass('chap_select').removeAttr('onchange');
+    $('.chap_select ~ button').addClass('nav-next').removeAttr('onclick');
     $('button[onclick^="self"]:not(.nav-next)').addClass('nav-prev').removeAttr('onclick');
-    $('select').removeAttr('onchange');
     $('#content_wrapper_inner > span').replaceWith($('#content_wrapper_inner > span').clone(false));
-    $('div > select').parent().replaceWith($('div > select').parent().clone(false));
+    $('div > .chap_select').parent().replaceWith($('div > .chap_select').parent().clone(false));
 
     //add buttons if they aren't there
     if ($('.nav-next').length === 0) {
-        $('select').after('<button class="btn nav-next" type="BUTTON" style="display:none;margin-left:5px;">Next &gt;</button>');
+        $('.chap_select').after('<button class="btn nav-next" type="BUTTON" style="display:none;margin-left:5px;">Next &gt;</button>');
     }
     if ($('.nav-prev').length === 0) {
-        $('select').before('<button class="btn nav-prev" type="BUTTON" style="display:none;margin-right:5px;">&lt; Prev</button>');
+        $('.chap_select').before('<button class="btn nav-prev" type="BUTTON" style="display:none;margin-right:5px;">&lt; Prev</button>');
     }
 
     //add loading spinners
-    $('select').after('<img class="loading-next" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
-    $('select').before('<img class="loading-prev" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
-    selectWidth = $('select').outerWidth();
+    $('.chap_select').after('<img class="loading-next" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
+    $('.chap_select').before('<img class="loading-prev" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
+    selectWidth = $('.chap_select').outerWidth();
     $('<img class="loading-select" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />')
-        .css('padding', '0px ' + (selectWidth - 30) / 2 + 'px').insertAfter('select');
+        .css('padding', '0px ' + (selectWidth - 30) / 2 + 'px').insertAfter('.chap_select');
 
     $('.nav-next').eq(0).click(function (e) {
         e.preventDefault();
         $(this).hide();
         $('.loading-next').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter + 1, false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), false);
         });
         $(this).blur();
     });
@@ -307,7 +315,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-next').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter + 1);
+            loadChapterInPlace(parseFFnStoryData(data, storyid));
         });
         $(this).blur();
     });
@@ -316,7 +324,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-prev').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter - 1, false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), false);
         });
         $(this).blur();
     });
@@ -325,44 +333,44 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-prev').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), chapter - 1);
+            loadChapterInPlace(parseFFnStoryData(data, storyid));
         });
         $(this).blur();
     });
 
-    $('select').eq(0).change(function (e) {
+    $('.chap_select').eq(0).change(function (e) {
         var target = e.target;
         $(this).hide();
         $('.loading-select').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), target.selectedIndex + 1, false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid), false);
         });
         $(this).blur();
     });
 
-    $('select').eq(1).change(function (e) {
+    $('.chap_select').eq(1).change(function (e) {
         var target = e.target;
         $(this).hide();
         $('.loading-select').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), target.selectedIndex + 1);
+            loadChapterInPlace(parseFFnStoryData(data, storyid));
         });
         $(this).blur();
     });
 }
 
-function loadChapterInPlace(d, chap, scrollToTop, back) {
+function loadChapterInPlace(d, scrollToTop, back) {
     var chapterTitle;
 
     if (!back) {
-        history.replaceState({chapter: chapter, scrollPos: $('body').scrollTop()}, '', d.storyLink + '/' + chapter);
+        history.replaceState({story: d.storyid, chapter: chapter, scrollPos: $('body').scrollTop()}, '', d.storyLink + '/' + chapter);
     }
-    chapter = chap;
+    chapter = d.currentChapter;
 
     $('body > div[style^="position"]').remove();
     $('#storytext').replaceWith(d.data.find('#storytext'));
     if (!back) {
-        history.pushState({chapter: chapter}, '', d.storyLink + '/' + chapter);
+        history.pushState({story: d.storyid, chapter: chapter}, '', d.storyLink + '/' + chapter);
     }
 
     if (scrollToTop !== false) {
@@ -410,7 +418,7 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
     $('.info-list-updated b').html(d.updated);
     $('.info-list-favs b').html(d.favs);
     $('.info-list-follows b').html(d.follows);
-    $('.info-list-reviews a').html(d.reviews).attr('href', '/r/' + storyid + '/' + chapter);
+    $('.info-list-reviews a').html(d.reviews).attr('href', '/r/' + d.storyid + '/' + chapter);
     $('select').get(0).selectedIndex = chapter - 1;
     $('select').get(1).selectedIndex = chapter - 1;
 
@@ -421,10 +429,10 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
 
     //to make reviews go to the right chapter and story
     storytextid = parseInt($('form[name="myselect"] script', d.data).html().match(/storytextid=(\d+)/)[1], 10);
-    $('#review_review').attr('onclick', 'chapter=' + chapter + ',storytextid=' + storytextid + ',storyid=' + storyid);
+    $('#review_review').attr('onclick', 'chapter=' + chapter + ',storytextid=' + storytextid + ',storyid=' + d.storyid);
 
     //to make abuse reports and community adds go to the right chapter and story
-    $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + storyid);
+    $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + d.storyid);
 
     //to properly report pageviews to FF.net's stat-tracker
     $.get($('#storytextp', d.data).prev().html().match(/\/eye\/[^']+/)[0]);
@@ -436,20 +444,68 @@ function loadChapterInPlace(d, chap, scrollToTop, back) {
     $('#review_postbutton').prop('disabled', false);
 }
 
+function loadStoryInPlace(d, back) {
+    var chapterTitle,
+        contentParent = d.data.filter('#content_parent'),
+        storyHeader = createStoryHeader(d);
+
+    if (!back) {
+        history.replaceState({story: storyid, chapter: chapter, scrollPos: $('body').scrollTop()}, '', document.location.href);
+    }
+    chapter = d.currentChapter;
+    storyid = d.storyid;
+    storytextid = parseInt($('form[name="myselect"] script', d.data).html().match(/storytextid=(\d+)/)[1], 10);
+    //to properly report pageviews to FF.net's stat-tracker
+    $.get($('#storytextp', d.data).prev().html().match(/\/eye\/[^']+/)[0]);
+
+    $('body > div[style^="position"]').remove();
+    contentParent.find('script').remove();
+    contentParent.find('#profile_top').remove();
+    contentParent.prepend(storyHeader);
+    $('#content_parent').replaceWith(contentParent);
+    if (!back) {
+        history.pushState({story: d.storyid, chapter: chapter}, '', d.storyLink + '/' + chapter);
+    }
+    //close any modals
+    $('.modal-backdrop.fade.in').trigger('click');
+
+    setUpBookshelfBar('#profile_top', d);
+    $('#author-title > b').attr('data-original', d.storyid).click(openStoryLanding);
+    //bring a small degree of sanity to review box structure
+    $('#review > table').replaceWith($('#review > table > tbody > tr > td > div'));
+    setVisited(true, chapter);
+    setUpStoryNav();
+
+    //set the document title (tab name)
+    chapterTitle = $('select')[0][chapter - 1].text.split(/\d+\. /)[1];
+    chapterTitle = (/Chapter \d{1,2}/.test(chapterTitle) ? ' ' : (' Chapter ' + chapter + ': ')) + chapterTitle;
+    document.title = d.title + chapterTitle + ', a '  + $('#pre_story_links > .lc-left > a:nth-child(3)').html().toLowerCase() + ' fanfic | FanFiction';
+
+    //to make reviews go to the right chapter and story
+    $('#review_review').attr('onclick', 'chapter=' + chapter + ',storytextid=' + storytextid + ',storyid=' + d.storyid);
+
+    //to make abuse reports and community adds go to the right chapter and story
+    $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + d.storyid);
+
+
+    //initialize review form
+    $('#review_name').hide();
+    $('#review_postbutton').html('Post Review as '+ document.cookie.match(/funn=([^;]+)/)[1]);
+    $('.login_items').hide();
+    $('#alert_subs').show();
+}
+
 function setUpBookshelfBar(container, storyData) {
     var storyId = storyData.storyid,
         toggle = function () {
             $(this).toggleClass('selected');
             $(this).toggleClass('unselected');
         };
-    if (container === undefined) {
-        container = '';
-    }
 
     ffAPI.getFollowingList(function (list) {
         $.each(list, function (i,v) {
             if (v === storyId) {
-                $(container + ' li.bookshelf[title="Following"]').removeClass('unselected').addClass('selected');
+                $(' li.bookshelf[title="Following"]', container).removeClass('unselected').addClass('selected');
                 return false;
             }
         });
@@ -458,7 +514,7 @@ function setUpBookshelfBar(container, storyData) {
     ffAPI.getFavoritedList(function (list) {
         $.each(list, function (i,v) {
             if (v === storyId) {
-                $(container + 'li.bookshelf[title="Favorites"]').removeClass('unselected').addClass('selected');
+                $('li.bookshelf[title="Favorites"]', container).removeClass('unselected').addClass('selected');
                 return false;
             }
         });
@@ -466,19 +522,19 @@ function setUpBookshelfBar(container, storyData) {
 
     ffAPI.getReadLater(function (list) {
         if (list.indexOf(storyId) !== -1) {
-            $(container + 'li.bookshelf[title="Read It Later"]').removeClass('unselected').addClass('selected');
+            $('li.bookshelf[title="Read It Later"]', container).removeClass('unselected').addClass('selected');
         }
     });
 
     ffAPI.getLiked(function (list) {
         if (list.indexOf(storyId) !== -1) {
-            $(container + 'li.bookshelf[title="Liked"]').removeClass('unselected').addClass('selected');
+            $('li.bookshelf[title="Liked"]', container).removeClass('unselected').addClass('selected');
         }
     });
 
     ffAPI.getBookshelves(function (shelves) {
         $('<li title="Add" class="shelf"><input type="text" placeholder="Bookshelf Name"></input><button class="btn">Add</button></li>')
-            .appendTo(container + '.bookshelves .dropdown-menu');
+            .appendTo($('.bookshelves .dropdown-menu', container));
         shelves.forEach(function (val) {
             var shelfId = val.id;
 
@@ -488,7 +544,7 @@ function setUpBookshelfBar(container, storyData) {
               (val.fandom.length > 1 && storyData.fandom.length > 1 && storyData.fandom[1] === val.fandom[1])) {
 
                 $('<li title="' + shelfId + '" class="shelf"><span>' + val.name + '</span><i class="icon-ok-circled"></i></li>')
-                    .insertBefore(container + '.bookshelves .dropdown-menu li[title="Add"]')
+                    .insertBefore($('.bookshelves .dropdown-menu li[title="Add"]', container))
                     .click(function () {
                         if ($(this).hasClass('selected')) {
                             ffAPI.bookshelf.remove(shelfId, storyId, toggle.bind(this));
@@ -504,12 +560,12 @@ function setUpBookshelfBar(container, storyData) {
                 });
             }
         });
-        $(container + '.bookshelves .dropdown-menu button').click(function () {
+        $('.bookshelves .dropdown-menu button', container).click(function () {
             var shelfName = $(this).siblings('input').val();
             if (shelfName) {
                 ffAPI.addBookshelf(shelfName, storyData.fandom, function (shelfId) {
                     $('<li title="' + shelfId + '" class="shelf"><span>' + shelfName + '</span><i class="icon-ok-circled"></i></li>')
-                        .insertBefore(container + '.bookshelves .dropdown-menu li[title="Add"]')
+                        .insertBefore($('.bookshelves .dropdown-menu li[title="Add"]', container))
                         .click(function () {
                             if ($(this).hasClass('selected')) {
                                 ffAPI.bookshelf.remove(shelfId, storyId, toggle.bind(this));
@@ -523,7 +579,7 @@ function setUpBookshelfBar(container, storyData) {
         });
     });
 
-    $(container + '.bookshelf').click(function () {
+    $('.bookshelf', container).click(function () {
         switch ($(this).attr('title')) {
             case 'Favorites':
                 if ($(this).hasClass('selected')) {
@@ -562,9 +618,9 @@ function setUpBookshelfBar(container, storyData) {
 
     function updateShelf(title, add) {
         if (add) {
-            $(container + '.bookshelves [title="' + title + '"]').removeClass('unselected').addClass('selected');
+            $('.bookshelves [title="' + title + '"]', container).removeClass('unselected').addClass('selected');
         } else {
-            $(container + '.bookshelves [title="' + title + '"]').removeClass('selected').addClass('unselected');
+            $('.bookshelves [title="' + title + '"]', container).removeClass('selected').addClass('unselected');
         }
     }
 
@@ -811,11 +867,11 @@ function convertStoryLinks() {
         } else {
             $('<span class="icon-chevron-right xicon-section-arrow" data-original="' + id + '" style="margin-left:5px;"></span>').insertAfter(el.find('.stitle'));
         }
-        el.find('.icon-chevron-right').click(storyLinkClick);
+        el.find('.icon-chevron-right').click(openStoryLanding);
     });
 }
 
-function storyLinkClick(e) {
+function openStoryLanding(e) {
     var storyId = $(e.currentTarget).attr('data-original'),
         loadedStorys = $('#story_landing .story_container').hide();
     if (loadedStorys.filter('[data-id=' + storyId + ']').show().length === 0) {
@@ -826,6 +882,16 @@ function storyLinkClick(e) {
         });
     } else {
         $('#story_landing').modal();
+    }
+}
+
+function storyLinkClick(e) {
+    var storyId = $(e.currentTarget).attr('data-story'),
+        chap = $(e.currentTarget).attr('data-chapter');
+    if (pageType === 'story') {
+        $.get(getStoryLink(storyId) + '/' + chap, function (data) {
+            loadStoryInPlace(parseStoryData(data, storyId));
+        });
     }
 }
 
@@ -863,11 +929,21 @@ function populateStoryLanding(d) {
     //chapters
     for (let i = d.chapters; i > 0; i--) {
         chapterTitle = chapterList.length ? chapterList.eq(i - 1).html().replace(/[0-9]+\. /, '') : 'Chapter 1';
-        el.find('.chapters').prepend('<div class="chapter_container ">' +
-            '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
-            '<a class="chapter_link" href="' + d.storyLink + '/' + i + '">' + chapterTitle + '</a></li></div>');
+        if (pageType === 'story') {
+            el.find('.chapters').prepend('<div class="chapter_container ">' +
+                '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
+                '<a class="chapter_link" data-story="' + d.storyid + '" data-chapter="' + i + '">' + chapterTitle + '</a></li></div>');
+
+        } else {
+            el.find('.chapters').prepend('<div class="chapter_container ">' +
+                '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
+                '<a class="chapter_link" href="' + d.storyLink + '/' + i + '">' + chapterTitle + '</a></li></div>');
+        }
     }
-    getReadObj('Read:' + d.storyid, function (readObj) {
+    if (pageType === 'story') {
+        el.find('.chapter_link').click(storyLinkClick);
+    }
+    getReadObj(d.storyid, function (readObj) {
         var readChapters = readObj.chapters;
         $('.chapter-read-icon', el).each(function (index, element) {
             if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
@@ -903,10 +979,11 @@ function populateStoryLanding(d) {
 
     m.children('.modal-body').append(el);
 
-    setUpBookshelfBar('.story_container[data-id=' + d.storyid + '] ', d);
+    setUpBookshelfBar('.story_container[data-id=' + d.storyid + ']', d);
 }
 
-function getReadObj(key, callback) {
+function getReadObj(storyId, callback) {
+    let key = 'Read:' + storyId;
     chrome.storage.local.get(key, function (items) {
         if (items[key]) {
             callback(items[key]);
@@ -946,14 +1023,14 @@ function setVisited(add, chap, id) {
     }
     chap = chap || chapter;
     key = 'Read:' + id;
-    getReadObj(key, function (readObj) {
+    getReadObj(id, function (readObj) {
         var storeObj = {};
         //regular pageview
         if (accessed && add) {
             readObj.lastRead = Math.trunc(Date.now() * 0.00001);
         }
         //not already marked as read
-        if (readObj.chapters.indexOf(chap) === -1 && add) {
+        if (!readObj.chapters.includes(chap) && add) {
             readObj.chapters.push(chap);
         //mark as not read
         } else if (add === false) {
@@ -962,7 +1039,7 @@ function setVisited(add, chap, id) {
                 chrome.storage.local.remove(key);
                 return;
             }
-        //if already marked as read but this isn't a chapter visit
+        //if already marked as read and this isn't a chapter visit
         } else if (!accessed) {
             return;
         }
@@ -994,7 +1071,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete) {
         //add stories that aren't on bookshelf already
         if (val !== 0 && !existing.includes(val)) {
             $.get(getStoryLink(val), function (data) {
-                wrapper.append(createStoryCard(data, val, i, byComplete));
+                wrapper.append(createStoryCard(parseStoryData(data, val), i, byComplete));
                 //since get requests are async, this ensures alignStoryCards runs after every storyCard has been made.
                 count--;
                 if (count === 0) {
@@ -1024,7 +1101,7 @@ function populateBookshelfAlt(stories, bookshelf) {
         loadBtn;
     part.forEach(function (val, i) {
         $.get(getStoryLink(val.k), function (data) {
-            wrapper.append(createStoryCard(data, val.k, -val.v, false));
+            wrapper.append(createStoryCard(parseStoryData(data, val.k), -val.v, false));
             count--;
             if (count === 0) {
                 setTimeout(alignStoryCards, 100, wrapper);
@@ -1068,7 +1145,6 @@ function parseFFnStoryData(data, storyid) {
     that.authorElement = d.find('#profile_top > a')[0].outerHTML;
     that.published = easydate(d.find('#profile_top .xgray span').last().data('xutime'));
     that.updated = easydate(d.find('#profile_top .xgray span').first().data('xutime'));
-    //that.chapter = d.find('#storytext');
 
     //fandom(s)
     if (d.find('.lc-left').has('img').length) {
@@ -1122,6 +1198,7 @@ function parseFFnStoryData(data, storyid) {
     } else {
         that.chapters = 1;
     }
+    that.currentChapter = that.chapters > 1 ? d.find('select').get(0).selectedIndex + 1 : 1;
 
     that.data = d;
 
@@ -1186,9 +1263,8 @@ function parseAo3StoryData(d, storyid) {
     return that;
 }
 
-function createStoryCard(data, storyid, index, byComplete) {
-    var d = parseStoryData(data, storyid),
-        infoString,
+function createStoryCard(d, index, byComplete) {
+    var infoString,
         storyCard = $('<li data-story="' + d.storyid + '"><div class="story-card-container"><div class="story-card"><h2>' +
                         '<span class="content_rating">' + d.rating + '</span>' +
                         '<a class="story_link" data-original="' + d.storyid + '">' + d.title + '</a>' +
@@ -1198,7 +1274,7 @@ function createStoryCard(data, storyid, index, byComplete) {
                         '</span></span></div><span class="info"></span></div></div></li>');
 
     byComplete = typeof byComplete !== 'undefined' ? byComplete : true;
-    storyCard.find('.story_link').click(storyLinkClick);
+    storyCard.find('.story_link').click(openStoryLanding);
 
     //no image
     if (d.storyImageLink && pageType !== 'popup') {
