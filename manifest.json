@@ -12,12 +12,6 @@
     "https://archiveofourown.org/"
   ],
 
-  "browser_action": {
-    "default_title": "Better Fanfiction", 
-    "default_icon": "FFNet.png",
-    "default_popup": "popup.html"  
-  },
-
   "background": {
     "scripts": ["eventPage.js"],
     "persistent": false
