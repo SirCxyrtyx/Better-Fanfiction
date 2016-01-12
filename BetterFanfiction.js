@@ -255,7 +255,7 @@ function userPage() {
     [{id:'st', class: '.mystories'}, {id:'fs', class: '.favstories'}].forEach(function (val, i) {
         $('#' + val.id + ' > div').eq(0).after('Include: <input type="text" class="' + val.id + '-filter"> Exclude: <input type="text" class="' + val.id + '-filter">');
         $('.' + val.id + '-filter').on('input', function () {
-            $(val['class']).show().filter(function () {
+            $(val['class']).removeClass('hide').filter(function () {
                 var exclude;
                 if ($(this).find('.xgray').html().search($('.' + val.id + '-filter').eq(0).val()) === -1) {
                     return true;
@@ -265,7 +265,7 @@ function userPage() {
                     return $(this).find('.xgray').html().search(exclude) !== -1;
                 }
                 return false;
-            }).hide();
+            }).addClass('hide');
             $('#l_' + val.id + ' .badge').html($(val['class'] + ':visible').length);
         });
         $('#' + val.id + '_inside').addClass('stories-main').before('<div class="stories-side" ><div><div class="panel">' +
@@ -281,11 +281,11 @@ function userPage() {
                 '<span class="control-label">' + v.k + ' (' + v.v + ')</span>' +
             '</label>').appendTo('#' + val.id + ' .fandoms-list .panel-body').click(function (event) {
 
-                var s = $(val['class']).filter((i,el) => JSON.parse(el.dataset.category).indexOf(this.dataset.fandom) !== -1);
+                var s = $(val['class']).filter((i,el) => JSON.parse(el.dataset.category).includes(this.dataset.fandom));
                 if ($('input', this)[0].checked) {
-                    s.show();
+                    s.removeClass('zhide');
                 } else {
-                    s.hide();
+                    s.addClass('zhide');
                 }
                 $('#l_' + val.id + ' .badge').html($(val['class'] + ':visible').length);
             });
