@@ -65,28 +65,12 @@ function run() {
                 } else {
                     loadStoryInPlace(parseStoryData(data, state.story), true);
                 }
-                    $('body').scrollTop(state.scrollPos);
+                $('body').scrollTop(state.scrollPos);
             });
         }
     });
 
     setUpBookshelves();
-
-    chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.updated && request.updated === 'Read'){
-            let storyLanding = $('#story_landing .story_container[data-id=' + request.id + ']');
-            if (storyLanding.length) {
-                ffAPI.getReadObj(request.id, function (readObj) {
-                    var readChapters = readObj.chapters;
-                    $('.chapter-read-icon', storyLanding).each(function (index, element) {
-                        if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
-                            $(this).addClass('chapter-read');
-                        }
-                    });
-                });
-            }
-        }
-    });
 
     if (pageType === 'user') {
         userPage();
@@ -855,6 +839,19 @@ function setUpBookshelves() {
                     break;
                 case 'Bookshelves':
 
+                    break;
+                case 'Read':
+                    let storyLanding = $('#story_landing .story_container[data-id=' + request.id + ']');
+                    if (storyLanding.length) {
+                        ffAPI.getReadObj(request.id, function (readObj) {
+                            var readChapters = readObj.chapters;
+                            $('.chapter-read-icon', storyLanding).each(function (index, element) {
+                                if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
+                                    $(this).addClass('chapter-read');
+                                }
+                            });
+                        });
+                    }
                     break;
                 default:
                     if (request.updated.startsWith('shelf:')){
