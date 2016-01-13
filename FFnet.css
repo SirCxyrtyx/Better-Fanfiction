@@ -1,3 +1,30 @@
+/*===========Personal Theme==========*/
+
+.story-page > body {
+  background-color: #D0CBE8 !important;
+  color: #483651 !important;
+}
+
+.story-page #content_wrapper {
+  background-color: inherit !important;
+}
+
+.story-page #content_wrapper_inner {
+  border: 0px !important;
+}
+
+.storytext {
+  line-height: 29px !important;
+  max-width: 45em !important;
+  text-align: justify !important;
+}
+
+.story-page #content_wrapper_inner div.lc-wrapper[style^="margin-top"] {
+  display:none;
+}
+
+/*====================================*/
+
 .zmenu.affix + #content_parent {
   margin-top: 43px;
 }
