@@ -212,6 +212,7 @@ function groupPage() {
             $('span[data-xutime]').each(function (index, el) {
                 $(this).html(easydate(this.dataset.xutime));
             });
+            history.pushState({pathParts}, '', 'https://www.fanfiction.net' + pathParts[0] + '1' + pathParts[1]);
         });
     });
 
