@@ -448,7 +448,6 @@ function loadChapterInPlace(d, scrollToTop, back) {
 
 function loadStoryInPlace(d, back) {
     var chapterTitle,
-        contentParent = d.data.filter('#content_parent'),
         storyHeader = createStoryHeader(d);
 
     if (!back) {
@@ -457,14 +456,21 @@ function loadStoryInPlace(d, back) {
     chapter = d.currentChapter;
     storyid = d.storyid;
     storytextid = parseInt($('form[name="myselect"] script', d.data).html().match(/storytextid=(\d+)/)[1], 10);
-    //to properly report pageviews to FF.net's stat-tracker
-    $.get($('#storytextp', d.data).prev().html().match(/\/eye\/[^']+/)[0]);
 
     $('body > div[style^="position"]').remove();
-    contentParent.find('script').remove();
-    contentParent.find('#profile_top').remove();
-    contentParent.prepend(storyHeader);
-    $('#content_parent').replaceWith(contentParent);
+    $('#profile_top').replaceWith(storyHeader);
+    //fandom
+    $('#pre_story_links').replaceWith(d.data.find('#pre_story_links'));
+    //chapter navigation
+    $('#content_wrapper_inner > span').replaceWith(d.data.find('#content_wrapper_inner > span'));
+    if ($('div > .chap_select').length) {
+        $('div > .chap_select').parent().replaceWith(d.data.find('div > #chap_select').parent());
+    } else {
+        $('#storytextp').next().after(d.data.find('div > #chap_select').parent());
+    }
+    //chapter text
+    $('#storytext').replaceWith(d.data.find('#storytext'));
+
     if (!back) {
         history.pushState({story: d.storyid, chapter: chapter}, '', d.storyLink + '/' + chapter);
     }
@@ -472,8 +478,6 @@ function loadStoryInPlace(d, back) {
     $('.modal-backdrop.fade.in').trigger('click');
 
     setUpBookshelfBar('#profile_top', d);
-    //bring a small degree of sanity to review box structure
-    $('#review > table').replaceWith($('#review > table > tbody > tr > td > div'));
     setVisited(true, chapter);
     setUpStoryNav();
 
@@ -488,6 +492,8 @@ function loadStoryInPlace(d, back) {
     //to make abuse reports and community adds go to the right chapter and story
     $('#story_actions > div > button').attr('onclick', 'chapter=' + chapter + ',title="' + d.title.replace(/ /g, '+') + '",storyid=' + d.storyid);
 
+    //to properly report pageviews to FF.net's stat-tracker
+    $.get($('#storytextp', d.data).prev().html().match(/\/eye\/[^']+/)[0]);
 
     //initialize review form
     $('#review_name').hide();
