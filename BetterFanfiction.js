@@ -190,6 +190,24 @@ function storyPage() {
         ffAPI.userid = parseInt($('form[name="myselect"] script').html().match(/userid = (\d+)/)[1], 10);
     }
     storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
+
+    //add review-loading button
+    $('<button id="show_reviews" class="btn">Reviews</button>').appendTo('#content_wrapper_inner')
+        .click(function () {
+            $.get('https://www.fanfiction.net/r/' + storyid + '/' + chapter, function (d) {
+                if ($('#reviews').length === 0) {
+                    $(d).find('thead').remove();
+                    $(d).find('#content_wrapper').attr('id', 'reviews').insertAfter('#content_parent');
+                    $('img.lazy').lazyload();
+                    $('span[data-xutime]').each(function (index, el) {
+                        $(this).html(easydate(this.dataset.xutime));
+                    });
+                } else {
+                    $('#reviews').toggle();
+                }
+            });
+            $(this).blur();
+        });
 }
 
 function groupPage() {
@@ -444,6 +462,9 @@ function loadChapterInPlace(d, scrollToTop, back) {
     $('#review_success').hide();
     $('#review_postbutton').html('Post Review as '+ document.cookie.match(/funn=([^;]+)/)[1]);
     $('#review_postbutton').prop('disabled', false);
+
+    //clear loaded reviews
+    $('#reviews').remove();
 }
 
 function loadStoryInPlace(d, back) {
@@ -500,6 +521,9 @@ function loadStoryInPlace(d, back) {
     $('#review_postbutton').html('Post Review as '+ document.cookie.match(/funn=([^;]+)/)[1]);
     $('.login_items').hide();
     $('#alert_subs').show();
+
+    //clear loaded reviews
+    $('#reviews').remove();
 }
 
 function setUpBookshelfBar(container, storyData) {

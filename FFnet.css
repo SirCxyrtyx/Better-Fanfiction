@@ -155,6 +155,10 @@ hr {
   font-family: "Times New Roman";
 }
 
+#show_reviews {
+    position: relative;
+    left: 100%;
+    margin-left: -81px;
 }
 
 .inner hr {
