@@ -171,6 +171,8 @@ function createStoryHeader(d) {
         wordsEl.after('<li class="info-list-favs">Favs <b>' + d.favs + '</b></li>');
     }
 
+    el.find('#author-title > b').attr('data-original', d.storyid).click(openStoryLanding);
+
     return el;
 }
 
@@ -180,7 +182,6 @@ function storyPage() {
     $('#profile_top').remove();
     $('#content_parent').prepend(storyHeader);
     setUpBookshelfBar('#profile_top', storyData);
-    $('#author-title > b').attr('data-original', storyData.storyid).click(openStoryLanding);
     //bring a small degree of sanity to review box structure
     $('#review > table').replaceWith($('#review > table > tbody > tr > td > div'));
     setVisited(true);
@@ -471,7 +472,6 @@ function loadStoryInPlace(d, back) {
     $('.modal-backdrop.fade.in').trigger('click');
 
     setUpBookshelfBar('#profile_top', d);
-    $('#author-title > b').attr('data-original', d.storyid).click(openStoryLanding);
     //bring a small degree of sanity to review box structure
     $('#review > table').replaceWith($('#review > table > tbody > tr > td > div'));
     setVisited(true, chapter);
