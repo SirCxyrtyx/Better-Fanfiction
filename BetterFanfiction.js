@@ -729,7 +729,8 @@ function setUpBookshelves() {
             $(this).blur();
         });
 
-        $('a[href="#shelf_tab"]').click(function () {
+        $('a[href="#shelf_tab"]').click(function (e) {
+            e.preventDefault();
             if ($('#shelf-select')[0].value !== '--') {
                 $(this).tab('show');
                 $('#bookshelf_display .tab-content .active').removeClass('active');
