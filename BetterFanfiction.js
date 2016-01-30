@@ -893,26 +893,33 @@ function convertStoryLinks() {
 }
 
 function openStoryLanding(e) {
-    var storyId = $(e.currentTarget).attr('data-original'),
-        loadedStorys = $('#story_landing .story_container').hide();
-    if (loadedStorys.filter('[data-id=' + storyId + ']').show().length === 0) {
-        $.get(getStoryLink(storyId), function (data) {
-            populateStoryLanding(parseStoryData(data, storyId));
-            $('#story_landing').modal().css('display', 'block').addClass('in');
+    if(!e.ctrlKey){
+        e.preventDefault();
+        let storyId = $(e.currentTarget).attr('data-original'),
+            loadedStorys = $('#story_landing .story_container').hide();
+        if (loadedStorys.filter('[data-id=' + storyId + ']').show().length === 0) {
+            $.get(getStoryLink(storyId), function (data) {
+                populateStoryLanding(parseStoryData(data, storyId));
+                $('#story_landing').modal().css('display', 'block').addClass('in');
 
-        });
-    } else {
-        $('#story_landing').modal();
+            });
+        } else {
+            $('#story_landing').modal();
+        }
     }
 }
 
 function storyLinkClick(e) {
-    var storyId = $(e.currentTarget).attr('data-story'),
-        chap = $(e.currentTarget).attr('data-chapter');
-    if (pageType === 'story') {
-        $.get(getStoryLink(storyId) + '/' + chap, function (data) {
-            loadStoryInPlace(parseStoryData(data, storyId));
-        });
+    if (!e.ctrlKey) {
+        e.preventDefault();
+        let storyId = $(e.currentTarget).attr('data-story'),
+            link = e.currentTarget.href;
+
+        if (pageType === 'story') {
+            $.get(link, function (data) {
+                loadStoryInPlace(parseStoryData(data, storyId));
+            });
+        }
     }
 }
 
@@ -922,7 +929,10 @@ function populateStoryLanding(d) {
         el = $('<div class="story_container" data-id=' + d.storyid + '> <div class="story_content_box" > <div class="no_padding"> <div class="title"> <span class="content_rating"></span> <div> <a class="story_name" href=""></a> <div class="author"> <span class="by">by</span> <a href=""></a> </div> </div> </div> <div class="story"> <div class="story_data"> <div class="right" style="margin-left:0px;"> <div class="padding"> <div class="description"><img src="" class="story_image"><hr> </div> <div class="chapter_list"> <ul class="chapters"> <li class="bottom"> <span class="status"></span> <div class="word_count"> <b></b> words total </div> </li> </ul> </div> </div> </div> </div> <div class="extra_story_data"> <div class="inner_data"> <span class="date_approved"> <div> <span class="published">Published</span> <br> <span></span> </div> </span> <span class="last_modified"> <div> <span class="published">Updated</span> <br> <span></span> </div> </span> </div> </div> </div> </div> </div></div>'),
         chapterList = d.data.find('select').first().children();
 
-    el.find('.story_name').html(d.title).attr('href', d.storyLink);
+    el.find('.story_name').html(d.title).click(storyLinkClick).attr({
+        href: d.storyLink,
+        'data-story': d.storyid
+    });
     el.find('.author').append(d.authorElement);
     el.find('img.story_image').attr('src', d.storyImageLink);
     el.find('.description').append('<p>' + d.description + '</p>');
@@ -950,20 +960,12 @@ function populateStoryLanding(d) {
     //chapters
     for (let i = d.chapters; i > 0; i--) {
         chapterTitle = chapterList.length ? chapterList.eq(i - 1).html().replace(/[0-9]+\. /, '') : 'Chapter 1';
-        if (pageType === 'story') {
-            el.find('.chapters').prepend('<div class="chapter_container ">' +
-                '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
-                '<a class="chapter_link" data-story="' + d.storyid + '" data-chapter="' + i + '">' + chapterTitle + '</a></li></div>');
+        el.find('.chapters').prepend('<div class="chapter_container ">' +
+            '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
+            '<a class="chapter_link" href="' + d.storyLink + '/' + i + '" data-story="' + d.storyid + '" data-chapter="' + i + '">' + chapterTitle + '</a></li></div>');
+    }
+    el.find('.chapter_link').click(storyLinkClick);
 
-        } else {
-            el.find('.chapters').prepend('<div class="chapter_container ">' +
-                '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
-                '<a class="chapter_link" href="' + d.storyLink + '/' + i + '">' + chapterTitle + '</a></li></div>');
-        }
-    }
-    if (pageType === 'story') {
-        el.find('.chapter_link').click(storyLinkClick);
-    }
     ffAPI.getReadObj(d.storyid, function (readObj) {
         var readChapters = readObj.chapters;
         $('.chapter-read-icon', el).each(function (index, element) {
@@ -1278,7 +1280,7 @@ function createStoryCard(d, index, byComplete) {
     var infoString,
         storyCard = $('<li data-story="' + d.storyid + '"><div class="story-card-container"><div class="story-card"><h2>' +
                         '<span class="content_rating">' + d.rating + '</span>' +
-                        '<a class="story_link" data-original="' + d.storyid + '">' + d.title + '</a>' +
+                        '<a class="story_link" href="' + getStoryLink(d.storyid) + '" data-original="' + d.storyid + '">' + d.title + '</a>' +
                         '<span class="status"></span></h2><div class="story-card-content">' +
                         '<span class="short_description">' + d.description +
                         '<span class="by">&nbsp;<b>·</b>&nbsp;' + d.authorElement +
