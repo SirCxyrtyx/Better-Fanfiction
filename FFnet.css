@@ -319,7 +319,6 @@ hr {
 }
 
 html > body {
-  overflow: visible !important;
   background-color: #EEEEEE!important;
   min-width: initial !important;
   color: #2a2a2a;

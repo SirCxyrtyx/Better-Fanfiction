@@ -455,6 +455,7 @@ jQuery.fn.fixed_center = function() {
             this.$backdrop.remove();
             this.$backdrop = null;
             b("body").css({overflow: ""})
+            b('html').css({'overflow-y': ''});
         },backdrop: function(g) {
             var f = this, e = this.$element.hasClass("fade") ? "fade" : "";
             if (this.isShown && this.options.backdrop) {
@@ -475,6 +476,7 @@ jQuery.fn.fixed_center = function() {
                     this.$element.prependTo(this.$backdrop).delegate('[data-dismiss="modal"]', "click.dismiss.modal", b.proxy(this.hide, this))
                 }
                 b("body").css({overflow: "hidden"});
+                b('html').css({'overflow-y': 'hidden'});
                 this.$backdrop.on("click", function(h) {
                     if (f.options.backdrop == "static") {
                         b.proxy(f.$element[0].focus, f.$element[0])
