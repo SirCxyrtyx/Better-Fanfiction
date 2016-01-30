@@ -1004,3 +1004,10 @@ span.control-label {
 .bubbledNNormal {
   min-height: 54px;
 }
+
+/*
+ * User Page Favorite Authors
+ */
+#fa dl {
+    height: 66px;
+}
