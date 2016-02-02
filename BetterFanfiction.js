@@ -985,7 +985,7 @@ function populateStoryLanding(d) {
     for (let i = d.chapters; i > 0; i--) {
         chapterTitle = chapterList.length ? chapterList.eq(i - 1).html().replace(/[0-9]+\. /, '') : 'Chapter 1';
         el.find('.chapters').prepend('<div class="chapter_container ">' +
-            '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">✔</div>' +
+            '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">&#10004;</div>' +
             '<a class="chapter_link" href="' + d.storyLink + '/' + i + '" data-story="' + d.storyid + '" data-chapter="' + i + '">' + chapterTitle + '</a></li></div>');
     }
     el.find('.chapter_link').click(storyLinkClick);
@@ -1307,7 +1307,7 @@ function createStoryCard(d, index, byComplete) {
                         '<a class="story_link" href="' + getStoryLink(d.storyid) + '" data-original="' + d.storyid + '">' + d.title + '</a>' +
                         '<span class="status"></span></h2><div class="story-card-content">' +
                         '<span class="short_description">' + d.description +
-                        '<span class="by">&nbsp;<b>·</b>&nbsp;' + d.authorElement +
+                        '<span class="by">&nbsp;<b>&#183;</b>&nbsp;' + d.authorElement +
                         '</span></span></div><span class="info"></span></div></div></li>');
 
     byComplete = typeof byComplete !== 'undefined' ? byComplete : true;
@@ -1360,11 +1360,11 @@ function createStoryCard(d, index, byComplete) {
     }
     //favs
     if (d.favs) {
-        infoString += '<b>·</b>&nbsp;' + d.favs + ' favs&nbsp';
+        infoString += '<b>&#183;</b>&nbsp;' + d.favs + ' favs&nbsp';
     }
     //characters
     if (d.chars) {
-        infoString += '<b>·</b>&nbsp;' + d.chars;
+        infoString += '<b>&#183;</b>&nbsp;' + d.chars;
     }
     storyCard.find('.info').html(infoString);
     return storyCard;
