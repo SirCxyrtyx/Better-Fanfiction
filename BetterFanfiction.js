@@ -206,7 +206,7 @@ function storyPage() {
                 $(window).trigger('resize');
 
                 //set up navigation
-                for(let i = Math.ceil(reviews.length / 50); i > 0; i--) {
+                for (let i = Math.ceil(reviews.length / 50); i > 0; i--) {
                     $('<li><button class="btn" data-page =' + i + '>' + i + '</button></li>').prependTo('.review_page_list');
                 }
                 $('.review_page_list button[data-page="1"]').addClass('selected');
@@ -219,7 +219,7 @@ function storyPage() {
                     let startIndex = (page - 1) * 50,
                         endIndex = reviews.length < (startIndex + 50) ? reviews.length : startIndex + 50;
                     $('html, body').animate({
-                        scrollTop: $(".review_controls:first-child").offset().top
+                        scrollTop: $('.review_controls:first-child').offset().top,
                     });
                     $('<tbody>').append(reviews.slice(startIndex, endIndex)).replaceAll('#reviews tbody');
                     $('.review_page_info span').html(`Viewing ${startIndex + 1} - ${endIndex} of ${reviews.length}`);
@@ -251,7 +251,7 @@ function storyPage() {
                             settings = {};
                         }
                         settings.reviewOrder = order;
-                        chrome.storage.local.set({'Settings': settings});
+                        chrome.storage.local.set({Settings: settings});
                         chrome.runtime.sendMessage({updated: 'Settings.reviewOrder', order});
                     });
                     el.blur();
@@ -333,7 +333,7 @@ function userPage() {
     [{id:'st', class: '.mystories'}, {id:'fs', class: '.favstories'}].forEach(function (val, i) {
         $('#' + val.id + ' > div').eq(0).after('Include: <input type="text" class="' + val.id + '-filter"> Exclude: <input type="text" class="' + val.id + '-filter">');
         $('.' + val.id + '-filter').on('input', function () {
-            $(val['class']).removeClass('hide').filter(function () {
+            $(val.class).removeClass('hide').filter(function () {
                 var exclude;
                 if ($(this).find('.xgray').html().search($('.' + val.id + '-filter').eq(0).val()) === -1) {
                     return true;
@@ -344,7 +344,7 @@ function userPage() {
                 }
                 return false;
             }).addClass('hide');
-            $('#l_' + val.id + ' .badge').html($(val['class'] + ':visible').length);
+            $('#l_' + val.id + ' .badge').html($(val.class + ':visible').length);
         });
         $('#' + val.id + '_inside').addClass('stories-main').before('<div class="stories-side" ><div><div class="panel">' +
                                                                         '<div class="panel fandoms-list">' +
@@ -359,13 +359,13 @@ function userPage() {
                 '<span class="control-label">' + v.k + ' (' + v.v + ')</span>' +
             '</label>').appendTo('#' + val.id + ' .fandoms-list .panel-body').click(function (event) {
 
-                var s = $(val['class']).filter((i,el) => JSON.parse(el.dataset.category).includes(this.dataset.fandom));
+                var s = $(val.class).filter((i,el) => JSON.parse(el.dataset.category).includes(this.dataset.fandom));
                 if ($('input', this)[0].checked) {
                     s.removeClass('zhide');
                 } else {
                     s.addClass('zhide');
                 }
-                $('#l_' + val.id + ' .badge').html($(val['class'] + ':visible').length);
+                $('#l_' + val.id + ' .badge').html($(val.class + ':visible').length);
             });
         });
     });
@@ -534,7 +534,7 @@ function loadChapterInPlace(d, scrollToTop, back) {
     //reset review form in case a review has been left
     $('#review').show();
     $('#review_success').hide();
-    $('#review_postbutton').html('Post Review as '+ document.cookie.match(/funn=([^;]+)/)[1]);
+    $('#review_postbutton').html('Post Review as ' + document.cookie.match(/funn=([^;]+)/)[1]);
     $('#review_postbutton').prop('disabled', false);
 
     //clear loaded reviews
@@ -592,7 +592,7 @@ function loadStoryInPlace(d, back) {
 
     //initialize review form
     $('#review_name').hide();
-    $('#review_postbutton').html('Post Review as '+ document.cookie.match(/funn=([^;]+)/)[1]);
+    $('#review_postbutton').html('Post Review as ' + document.cookie.match(/funn=([^;]+)/)[1]);
     $('.login_items').hide();
     $('#alert_subs').show();
 
@@ -730,7 +730,7 @@ function setUpBookshelfBar(container, storyData) {
     }
 
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.updated && request.id === storyId){
+        if (request.updated && request.id === storyId) {
             switch (request.updated){
                 case 'Liked':
                     updateShelf('Liked', request.add);
@@ -747,7 +747,7 @@ function setUpBookshelfBar(container, storyData) {
                 case 'Bookshelves':
                     break;
                 default:
-                    if (request.updated.startsWith('shelf:')){
+                    if (request.updated.startsWith('shelf:')) {
                         updateShelf(request.updated.substr(6), request.add);
                     }
                     break;
@@ -845,7 +845,7 @@ function setUpBookshelves() {
         });
     });
 
-    if (pageType.endsWith('story') ) {
+    if (pageType.endsWith('story')) {
         $('#bookshelf_tabs a[href="#alsoliked_tab"]').click(function (e) {
             e.preventDefault();
             if (!$('#alsoliked_tab').hasClass('populated')) {
@@ -929,7 +929,7 @@ function setUpBookshelves() {
         }
     }
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.updated){
+        if (request.updated) {
             switch (request.updated){
                 case 'Liked':
                     updateShelf('#liked_tab');
@@ -960,7 +960,7 @@ function setUpBookshelves() {
                     }
                     break;
                 default:
-                    if (request.updated.startsWith('shelf:')){
+                    if (request.updated.startsWith('shelf:')) {
                         $('#shelf_tab_' + request.updated.substr(6)).removeClass('populated');
                         if ($('#shelf_tab_' + request.updated.substr(6)).hasClass('active')) {
                             $('#shelf-select').trigger('change');
@@ -991,7 +991,7 @@ function convertStoryLinks() {
 }
 
 function openStoryLanding(e) {
-    if(!e.ctrlKey){
+    if (!e.ctrlKey) {
         e.preventDefault();
         let storyId = $(e.currentTarget).attr('data-original'),
             loadedStorys = $('#story_landing .story_container').hide();
@@ -1029,7 +1029,7 @@ function populateStoryLanding(d) {
 
     el.find('.story_name').html(d.title).click(storyLinkClick).attr({
         href: d.storyLink,
-        'data-story': d.storyid
+        'data-story': d.storyid,
     });
     el.find('.author').append(d.authorElement);
     el.find('img.story_image').attr('src', d.storyImageLink);
@@ -1230,10 +1230,10 @@ function populateBookshelfAlt(stories, bookshelf) {
     }
 }
 
-function parseStoryData(data, storyid){
+function parseStoryData(data, storyid) {
     var d = $(data);
 
-    if(typeof storyid === 'string' && storyid.match(/\D/)){
+    if (typeof storyid === 'string' && storyid.match(/\D/)) {
         return parseAo3StoryData(d, storyid);
     } else {
         return parseFFnStoryData(d, storyid);
@@ -1334,7 +1334,7 @@ function parseAo3StoryData(d, storyid) {
     that.reviews = d.find('dd.comments').html();
     //Ao3 chapters have a unique id in the url, instead of the direct indexing of FFnet
     that.chapterLookup = {};
-    $('#selected_id option').each((i,v) => that.chapterLookup[i+1] = v.val);
+    $('#selected_id option').each((i,v) => that.chapterLookup[i + 1] = v.val);
     that.chapters = Object.keys(that.chapterLookup).length;
 
     //fandom(s)
@@ -1364,9 +1364,9 @@ function parseAo3StoryData(d, storyid) {
     d.find('.relationship a').each(function(index, el) {
         rels.push($(el).html());
     });
-    rels.forEach(val => val.split(/\/|(?: &amp; )/).forEach(function (val){
+    rels.forEach(val => val.split(/\/|(?: &amp; )/).forEach(function (val) {
         var i = that.chars.indexOf(val);
-        if (i !== -1){
+        if (i !== -1) {
             that.chars.splice(i, 1);
         }
     }));
@@ -1460,11 +1460,11 @@ function alignStoryCards(cardList) {
         el1 = cards.eq(i);
         el2 = cards.eq(i + 1);
 
-        if(el2.length){
+        if (el2.length) {
             diff = el1.find('.story-card').height() - el2.find('.story-card').height();
             if (diff > 0) {
                 el2.find('.story-card-content').css('padding-bottom', diff + 'px');
-            } else if (diff < 0){
+            } else if (diff < 0) {
                 el1.find('.story-card-content').css('padding-bottom', -diff + 'px');
             }
         //last one has no counterpart, remove any padding
@@ -1503,8 +1503,8 @@ function fandomsInList(listClass) {
     for (let prop in also) {
         if (also.hasOwnProperty(prop)) {
             list.push({
-                'k': prop,
-                'v': also[prop]
+                k: prop,
+                v: also[prop],
             });
         }
     }
@@ -1536,12 +1536,13 @@ function FanFictionAPI() {
     });
 
     Object.defineProperty(that, 'userid', { set: function (x) {
-        loggedIn = true;
-        if(x !== -1){
-            userid = x;
-            chrome.storage.local.set({'userid': x});
-        }
-    }});
+            loggedIn = true;
+            if (x !== -1) {
+                userid = x;
+                chrome.storage.local.set({ userid: x });
+            }
+        },
+    });
 
     //type = 'alert' || 'favorites'
     function readFFnetList(type, callback, index, list) {
@@ -1595,20 +1596,20 @@ function FanFictionAPI() {
                 authoralert: 0,
                 storyalert: type === 'follow' ? 1 : 0,
                 favstory: type === 'fav' ? 1 : 0,
-                favauthor: 0
+                favauthor: 0,
             },
             function (data) {
                 if (data.error) {
                     $.toast('We are unable to process your request due to an network error. Please try again later.');
                 } else {
                     if (type === 'follow') {
-                        chrome.storage.local.set({'AlertsLastModified': Date.now()});
+                        chrome.storage.local.set({ AlertsLastModified: Date.now() });
                         chrome.runtime.sendMessage({updated: 'Alerts', id, add: true});
                     } else {
-                        chrome.storage.local.set({'FavoritesLastModified': Date.now()});
+                        chrome.storage.local.set({ FavoritesLastModified: Date.now() });
                         chrome.runtime.sendMessage({updated: 'Favorites', id, add: true});
                     }
-                    $.toast('We have successfully processed the following:' + data.payload_data, 3000);
+                    $.toast('We have successfully processed the following:' + data.payload_data, 3000); // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
                     if (callback !== undefined) {
                         callback();
                     }
@@ -1720,8 +1721,8 @@ function FanFictionAPI() {
                     for (let prop in also) {
                         if (also.hasOwnProperty(prop)) {
                             list.push({
-                                'k': prop,
-                                'v': also[prop]
+                                k: prop,
+                                v: also[prop],
                             });
                         }
                     }
@@ -1758,8 +1759,8 @@ function FanFictionAPI() {
             for (let prop in also) {
                 if (also.hasOwnProperty(prop)) {
                     list.push({
-                        'k': prop,
-                        'v': also[prop]
+                        k: prop,
+                        v: also[prop],
                     });
                 }
             }
@@ -1910,8 +1911,8 @@ function FanFictionAPI() {
             index = items.ReadLater.indexOf(id);
             if (index !== -1) {
                 list.splice(index, 1);
-                chrome.storage.local.set({'ReadLater': list});
-                chrome.runtime.sendMessage({updated: 'ReadLater', id, add: false});
+                chrome.storage.local.set({ ReadLater: list });
+                chrome.runtime.sendMessage({ updated: 'ReadLater', id, add: false });
             }
             if (callback !== undefined) {
                 callback();
@@ -1927,11 +1928,11 @@ function FanFictionAPI() {
 
         $.post('https://www.fanfiction.net/alert/story.php?', {
             action: 'remove-multi',
-            'rids[]': id
+            'rids[]': id,
         },
         function (data) {
-            chrome.storage.local.set({'AlertsLastModified': Date.now()});
-            chrome.runtime.sendMessage({updated: 'Alerts', id, add: false});
+            chrome.storage.local.set({ AlertsLastModified: Date.now() });
+            chrome.runtime.sendMessage({ updated: 'Alerts', id, add: false });
             //$.toast('You have succesfully unfollowed: ' + title.replace(/\+/g, ' '));
             if (callback !== undefined) {
                 callback();
@@ -1951,11 +1952,11 @@ function FanFictionAPI() {
 
         $.post('https://www.fanfiction.net/favorites/story.php?', {
             action: 'remove-multi',
-            'rids[]': id
+            'rids[]': id,
         },
         function (data) {
-            chrome.storage.local.set({'FavoritesLastModified': Date.now()});
-            chrome.runtime.sendMessage({updated: 'Favorites', id, add: false});
+            chrome.storage.local.set({ FavoritesLastModified: Date.now() });
+            chrome.runtime.sendMessage({ updated: 'Favorites', id, add: false });
             //$.toast('You have succesfully unfaved: ' + title.replace(/\+/g, ' '));
             if (callback !== undefined) {
                 callback();
@@ -1979,8 +1980,8 @@ function FanFictionAPI() {
             index = items.Liked.indexOf(id);
             if (index !== -1) {
                 list.splice(index, 1);
-                chrome.storage.local.set({'Liked': list});
-                chrome.runtime.sendMessage({updated: 'Liked', id, add: false});
+                chrome.storage.local.set({ Liked: list });
+                chrome.runtime.sendMessage({ updated: 'Liked', id, add: false });
             }
             if (callback !== undefined) {
                 callback();
@@ -2000,9 +2001,9 @@ function FanFictionAPI() {
             index = items.Bookshelves.findIndex(el => el.id === id);
             if (index !== -1) {
                 list.splice(index, 1);
-                chrome.storage.local.set({'Bookshelves': list});
+                chrome.storage.local.set({ Bookshelves: list });
                 chrome.storage.local.remove('shelf:' + id);
-                chrome.runtime.sendMessage({updated: 'Bookshelves'});
+                chrome.runtime.sendMessage({ updated: 'Bookshelves' });
             }
             if (callback !== undefined) {
                 callback();
@@ -2020,8 +2021,8 @@ function FanFictionAPI() {
             }
             if (list.indexOf(id) === -1) {
                 list.push(id);
-                chrome.storage.local.set({'ReadLater': list});
-                chrome.runtime.sendMessage({updated: 'ReadLater', id, add: true});
+                chrome.storage.local.set({ ReadLater: list });
+                chrome.runtime.sendMessage({ updated: 'ReadLater', id, add: true });
             }
             if (callback !== undefined) {
                 callback();
@@ -2047,8 +2048,8 @@ function FanFictionAPI() {
             }
             if (list.indexOf(id) === -1) {
                 list.push(id);
-                chrome.storage.local.set({'Liked': list});
-                chrome.runtime.sendMessage({updated: 'Liked', id, add: true});
+                chrome.storage.local.set({ Liked: list });
+                chrome.runtime.sendMessage({ updated: 'Liked', id, add: true });
             }
             if (callback !== undefined) {
                 callback();
@@ -2069,8 +2070,8 @@ function FanFictionAPI() {
             }
 
             list.push({id: nextId, name: shelfName, fandom: fandom});
-            chrome.storage.local.set({'Bookshelves': list});
-            chrome.runtime.sendMessage({updated: 'Bookshelves'});
+            chrome.storage.local.set({ Bookshelves: list });
+            chrome.runtime.sendMessage({ updated: 'Bookshelves' });
             if (callback !== undefined) {
                 callback(nextId);
             }
@@ -2078,7 +2079,7 @@ function FanFictionAPI() {
     };
 
     that.bookshelf = {
-        add : function (shelfId, storyId, callback) {
+        add: function (shelfId, storyId, callback) {
             var shelfName = 'shelf:' + shelfId;
             chrome.storage.local.get(shelfName, function (items) {
                 var list;
@@ -2098,7 +2099,7 @@ function FanFictionAPI() {
             });
         },
 
-        remove : function (shelfId, storyId, callback) {
+        remove: function (shelfId, storyId, callback) {
             var shelfName = 'shelf:' + shelfId;
             chrome.storage.local.get(shelfName, function (items) {
                 var index,
@@ -2118,7 +2119,7 @@ function FanFictionAPI() {
             });
         },
 
-        get : function (shelfId, callback) {
+        get: function (shelfId, callback) {
             var shelfName = 'shelf:' + shelfId;
             chrome.storage.local.get(shelfName, function (items) {
                 if (items[shelfName]) {
@@ -2127,7 +2128,7 @@ function FanFictionAPI() {
                     callback([]);
                 }
             });
-        }
+        },
     };
     return that;
 }
@@ -2153,7 +2154,7 @@ function progressDialog(that) {
     tasks = that.tasks || 0;
     dialog = $('<div>', {
         class: 'progress-dialog',
-        html: '<span id="progressMsg"></span><progress value="0" max="' + tasks + '"></progress>'
+        html: '<span id="progressMsg"></span><progress value="0" max="' + tasks + '"></progress>',
     });
 
     that.parent.append(dialog);
@@ -2171,7 +2172,7 @@ function progressDialog(that) {
             duration: 500,
             step: function () {
                 progressBar.attr('value', this.value);
-            }
+            },
         });
         val = progress;
         if (val >= tasks) {
@@ -2185,7 +2186,7 @@ function progressDialog(that) {
             duration: 500,
             step: function () {
                 progressBar.attr('value', this.value);
-            }
+            },
         });
         val = val + num;
         if (val >= tasks) {
@@ -2205,7 +2206,7 @@ function easydate(unix) {
     var unixDiff = Math.round(Date.now() / 1000) - unix,
         date = new Date(unix * 1000),
         year = date.getFullYear(),
-        month_short = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()],
+        monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()],
         day = date.getDate();
     if (unixDiff < 60) {
         return 'secs ago';
@@ -2214,16 +2215,16 @@ function easydate(unix) {
     } else if (unixDiff < 3600 * 24) {
         return Math.floor(unixDiff / 3600) + 'h ago';
     } else if ((new Date()).getFullYear() === year) {
-        return month_short + ' ' + day;
+        return monthShort + ' ' + day;
     } else {
-        return month_short + ' ' + day + ', ' + year;
+        return monthShort + ' ' + day + ', ' + year;
     }
 }
 
 function getAo3UsersBookmarks(users, callback) {
     var list = [],
         count = users.length;
-    users.forEach(function (val, i){
+    users.forEach(function (val, i) {
         //Hardcoded Harry Potter Fandom id: 136512
         getAo3BookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + '136512' + '&page=', function (l) {
             list.push(...l);
@@ -2242,8 +2243,8 @@ function getAo3UsersBookmarks(users, callback) {
                 for (let prop in also) {
                     if (also.hasOwnProperty(prop)) {
                         list.push({
-                            'k': prop,
-                            'v': also[prop]
+                            k: prop,
+                            v: also[prop],
                         });
                     }
                 }
@@ -2264,7 +2265,7 @@ function getAo3BookmarksFromUser(url, callback, index, list) {
     list = typeof list !== 'undefined' ? list : [];
     index = typeof index !== 'undefined' ? index : 1;
 
-    $.get(url + index ,
+    $.get(url + index,
         function (data) {
             list = list.concat(Array.from($(data).find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
             if ($(data).find('.next a').length && index < 100) {

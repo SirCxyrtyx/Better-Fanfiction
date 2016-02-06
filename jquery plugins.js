@@ -1,5 +1,5 @@
 //jshint jquery: true, strict: false, quotmark: false, expr: true, asi: true
-/* global*/ 
+// jscs:disable
 
 //$.toast(message [, displaytime = 2500])
 //modified from Fanfiction.net source code.
