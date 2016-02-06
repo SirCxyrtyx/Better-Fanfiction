@@ -1258,7 +1258,10 @@ function parseAo3StoryData(d, storyid) {
     that.favs = d.find('dd.kudos').html();
     //comments
     that.reviews = d.find('dd.comments').html();
-    that.chapters = d.find('dd.chapters').html().match(/\d+/)[0];
+    //Ao3 chapters have a unique id in the url, instead of the direct indexing of FFnet
+    that.chapterLookup = {};
+    $('#selected_id option').each((i,v) => that.chapterLookup[i+1] = v.val);
+    that.chapters = Object.keys(that.chapterLookup).length;
 
     //fandom(s)
     that.fandom = [];
