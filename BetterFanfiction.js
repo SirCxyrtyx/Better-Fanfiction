@@ -9,6 +9,7 @@ var ffAPI = FanFictionAPI(),
     chapter,
     storytextid,
     path = document.location.pathname,
+    reviewControls = '<div class="review_controls"><ul class="review_page_list"></ul><ul class="review_page_info"><li><span></span></li><li><button class="btn">Newest First</button></li></ul></div>',
     bookshelfBar = '<ul class="bookshelves dropdown">' +
         '<li title="Favorites" class="bookshelf unselected" data-added="0" style="background:#ffb400"><span>Fav</span></li>' +
         '<li title="Read It Later" class="bookshelf unselected" data-added="0" style="background:#318ccb"><span>RiL</span></li>' +
@@ -192,22 +193,95 @@ function storyPage() {
     storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
 
     //add review-loading button
-    $('<button id="show_reviews" class="btn">Reviews</button>').appendTo('#content_wrapper_inner')
-        .click(function () {
-            $.get('https://www.fanfiction.net/r/' + storyid + '/' + chapter, function (d) {
-                if ($('#reviews').length === 0) {
-                    $(d).find('thead').remove();
-                    $(d).find('#content_wrapper').attr('id', 'reviews').insertAfter('#content_parent');
+    $('<button id="show_reviews" class="btn">Reviews</button>').appendTo('#content_wrapper_inner').click(function () {
+        if ($('#reviews').length === 0) {
+            $.get('https://www.fanfiction.net/r/' + storyid + '/' + chapter, (d) => {
+                d = $(d);
+                d.find('thead').remove();
+                let reviews = d.find('#content_wrapper tr').remove(),
+                    page = 1;
+                d.find('#content_wrapper').attr({id: 'reviews', style: ''}).prepend(reviewControls).append(reviewControls)
+                    .insertAfter('#content_parent');
+                //to force the FFnet native script to resize the reviews to fit the page
+                $(window).trigger('resize');
+
+                //set up navigation
+                for(let i = Math.ceil(reviews.length / 50); i > 0; i--) {
+                    $('<li><button class="btn" data-page =' + i + '>' + i + '</button></li>').prependTo('.review_page_list');
+                }
+                $('.review_page_list button[data-page="1"]').addClass('selected');
+                if (reviews.length < 50) {
+                    $('.review_page_list').hide();
+                }
+
+                $('.review_page_list').click(function (e) {
+                    page = parseInt(e.target.dataset.page, 10);
+                    let startIndex = (page - 1) * 50,
+                        endIndex = reviews.length < (startIndex + 50) ? reviews.length : startIndex + 50;
+                    $('html, body').animate({
+                        scrollTop: $(".review_controls:first-child").offset().top
+                    });
+                    $('<tbody>').append(reviews.slice(startIndex, endIndex)).replaceAll('#reviews tbody');
+                    $('.review_page_info span').html(`Viewing ${startIndex + 1} - ${endIndex} of ${reviews.length}`);
                     $('img.lazy').lazyload();
                     $('span[data-xutime]').each(function (index, el) {
                         $(this).html(easydate(this.dataset.xutime));
                     });
-                } else {
-                    $('#reviews').toggle();
-                }
+                    $('.review_page_list .selected').removeClass('selected');
+                    $('.review_page_list button[data-page="' + page + '"]').addClass('selected');
+                });
+
+                $('.review_page_info button').click(function(e) {
+                    let el = $(e.target),
+                        order;
+                    [].reverse.apply(reviews);
+                    $('.review_page_list button[data-page="' + page + '"]').first().trigger('click');
+                    if (el.data('order') === 'Oldest') {
+                        order = 'Newest';
+                    } else {
+                        order = 'Oldest';
+                    }
+                    $('.review_page_info button').data('order', order);
+                    $('.review_page_info button').html(order + ' First');
+                    chrome.storage.local.get('Settings', function (items) {
+                        var settings;
+                        if (items.Settings) {
+                            settings = items.Settings;
+                        } else {
+                            settings = {};
+                        }
+                        settings.reviewOrder = order;
+                        chrome.storage.local.set({'Settings': settings});
+                        chrome.runtime.sendMessage({updated: 'Settings.reviewOrder', order});
+                    });
+                    el.blur();
+                });
+
+                chrome.storage.local.get('Settings', function (items) {
+                    var order;
+                    if (items.Settings && items.Settings.reviewOrder) {
+                        order = items.Settings.reviewOrder;
+                    } else {
+                        order = 'Newest';
+                    }
+                    if (order === 'Oldest') {
+                        [].reverse.apply(reviews);
+                    }
+                    $('.review_page_info button').data('order', order);
+                    $('.review_page_info button').html(order + ' First');
+                    $('.review_page_list button[data-page="1"]').first().trigger('click');
+                });
+
+                $(this).show();
+                $('.loading-reviews').hide();
             });
-            $(this).blur();
-        });
+            $(this).hide();
+            $('.loading-reviews').show();
+        } else {
+            $('#reviews').toggle();
+        }
+        $(this).blur();
+    }).after('<img class="loading-reviews" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
 }
 
 function groupPage() {
