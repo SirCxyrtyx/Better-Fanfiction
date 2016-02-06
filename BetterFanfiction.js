@@ -400,7 +400,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-next').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid));
         });
         $(this).blur();
     });
@@ -409,7 +409,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-next').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid));
+            loadChapterInPlace(parseFFnStoryData(data, storyid), true);
         });
         $(this).blur();
     });
@@ -418,7 +418,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-prev').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid));
         });
         $(this).blur();
     });
@@ -427,7 +427,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-prev').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (chapter - 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid));
+            loadChapterInPlace(parseFFnStoryData(data, storyid), true);
         });
         $(this).blur();
     });
@@ -437,7 +437,7 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-select').eq(0).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid), false);
+            loadChapterInPlace(parseFFnStoryData(data, storyid));
         });
         $(this).blur();
     });
@@ -447,13 +447,13 @@ function setUpStoryNav() {
         $(this).hide();
         $('.loading-select').eq(1).show();
         $.get('https://www.fanfiction.net/s/' + storyid + '/' + (target.selectedIndex + 1), function (data) {
-            loadChapterInPlace(parseFFnStoryData(data, storyid));
+            loadChapterInPlace(parseFFnStoryData(data, storyid), true);
         });
         $(this).blur();
     });
 }
 
-function loadChapterInPlace(d, scrollToTop, back) {
+function loadChapterInPlace(d, scrollToTop = false, back = false) {
     var chapterTitle;
 
     if (!back) {
@@ -467,7 +467,7 @@ function loadChapterInPlace(d, scrollToTop, back) {
         history.pushState({story: d.storyid, chapter: chapter}, '', d.storyLink + '/' + chapter);
     }
 
-    if (scrollToTop !== false) {
+    if (scrollToTop) {
         $('select').get(0).scrollIntoView();
     }
 
@@ -541,7 +541,7 @@ function loadChapterInPlace(d, scrollToTop, back) {
     $('#reviews').remove();
 }
 
-function loadStoryInPlace(d, back) {
+function loadStoryInPlace(d, back = false) {
     var chapterTitle,
         storyHeader = createStoryHeader(d);
 
@@ -1122,7 +1122,7 @@ function createTag(name, type) {
     return $('<div class="tag-' + type + '">' + name + '</div>');
 }
 
-function setVisited(add, chap, id) {
+function setVisited(add, chap = chapter, id = false) {
     var key,
         accessed = false;
 
@@ -1131,7 +1131,6 @@ function setVisited(add, chap, id) {
         id = storyid;
         accessed = true;
     }
-    chap = chap || chapter;
     key = 'Read:' + id;
     ffAPI.getReadObj(id, function (readObj) {
         var storeObj = {};
@@ -1159,11 +1158,10 @@ function setVisited(add, chap, id) {
     });
 }
 
-function populateBookshelf(storyIds, bookshelf, byComplete) {
+function populateBookshelf(storyIds, bookshelf, byComplete = true) {
     var wrapper = $('.story-card-list', bookshelf),
         count = storyIds.length,
         existing;
-    byComplete = typeof byComplete !== 'undefined' ? byComplete : true;
 
     //if there are already stories on the bookshelf
     if (wrapper.children().length) {
@@ -1377,7 +1375,7 @@ function parseAo3StoryData(d, storyid) {
     return that;
 }
 
-function createStoryCard(d, index, byComplete) {
+function createStoryCard(d, index, byComplete = true) {
     var infoString,
         storyCard = $('<li data-story="' + d.storyid + '"><div class="story-card-container"><div class="story-card"><h2>' +
                         '<span class="content_rating">' + d.rating + '</span>' +
@@ -1387,7 +1385,6 @@ function createStoryCard(d, index, byComplete) {
                         '<span class="by">&nbsp;<b>&#183;</b>&nbsp;' + d.authorElement +
                         '</span></span></div><span class="info"></span></div></div></li>');
 
-    byComplete = typeof byComplete !== 'undefined' ? byComplete : true;
     storyCard.find('.story_link').click(openStoryLanding);
 
     //no image
@@ -1545,14 +1542,11 @@ function FanFictionAPI() {
     });
 
     //type = 'alert' || 'favorites'
-    function readFFnetList(type, callback, index, list) {
+    function readFFnetList(type, callback, index = 1, list = []) {
         if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
             return;
         }
-
-        list = typeof list !== 'undefined' ? list : [];
-        index = typeof index !== 'undefined' ? index : 1;
 
         $.post('https://www.fanfiction.net/' + type + '/story.php?' + (type === 'favorites' ? 'sort=added&' : '') + 'p=' + index,
             function (data) {
@@ -1566,13 +1560,13 @@ function FanFictionAPI() {
                     if (type === 'alert') {
                         followingList = list;
                         followingAccessTime = Date.now();
-                        if (callback !== undefined) {
+                        if (callback) {
                             callback(followingList);
                         }
                     } else {
                         favoritedList = list;
                         favoritedAccessTime = Date.now();
-                        if (callback !== undefined) {
+                        if (callback) {
                             callback(favoritedList);
                         }
                     }
@@ -1610,7 +1604,7 @@ function FanFictionAPI() {
                         chrome.runtime.sendMessage({updated: 'Favorites', id, add: true});
                     }
                     $.toast('We have successfully processed the following:' + data.payload_data, 3000); // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
-                    if (callback !== undefined) {
+                    if (callback) {
                         callback();
                     }
                 }
@@ -1622,10 +1616,7 @@ function FanFictionAPI() {
         }
     }
 
-    function getReviewers(storyid, callback, index, list) {
-        list = typeof list !== 'undefined' ? list : [];
-        index = typeof index === 'number' ? index : 1;
-
+    function getReviewers(storyid, callback, index = 1, list = []) {
         $.get('https://www.fanfiction.net/r/' + storyid + '/0/' + index,
             function (data) {
                 var tmp = data.match(/\/u\/\d+\//g);
@@ -1658,10 +1649,7 @@ function FanFictionAPI() {
         });
     }
 
-    function getReviewersByChapter(storyid, chapters, callback, index, list) {
-        list = typeof list !== 'undefined' ? list : [];
-        index = typeof index !== 'undefined' ? index : 1;
-
+    function getReviewersByChapter(storyid, chapters, callback, index = 1, list = []) {
         $.get('https://www.fanfiction.net/r/' + storyid + '/' + index,
             function (data) {
                 var tmp = data.match(/\/u\/\d+\//g);
@@ -1694,10 +1682,7 @@ function FanFictionAPI() {
         });
     }
 
-    function getUserFavs(users, callback, index, list) {
-        list = typeof list !== 'undefined' ? list : [];
-        index = typeof index !== 'undefined' ? index : 0;
-
+    function getUserFavs(users, callback, index = 0, list = []) {
         $.get('https://www.fanfiction.net' + users[index],
             function (data) {
                 progressBar.advance();
@@ -1868,10 +1853,7 @@ function FanFictionAPI() {
         });
     };
 
-    that.getGroupStories = function (pathParts, callback, index, list) {
-        list = typeof list !== 'undefined' ? list : [];
-        index = typeof index !== 'undefined' ? index : 1;
-
+    that.getGroupStories = function (pathParts, callback, index = 1, list = []) {
         $.get('https://www.fanfiction.net' + pathParts[0] + index + pathParts[1],
             function (data) {
                 list = list.concat($('.z-list', data).toArray());
@@ -1914,7 +1896,7 @@ function FanFictionAPI() {
                 chrome.storage.local.set({ ReadLater: list });
                 chrome.runtime.sendMessage({ updated: 'ReadLater', id, add: false });
             }
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         });
@@ -1934,7 +1916,7 @@ function FanFictionAPI() {
             chrome.storage.local.set({ AlertsLastModified: Date.now() });
             chrome.runtime.sendMessage({ updated: 'Alerts', id, add: false });
             //$.toast('You have succesfully unfollowed: ' + title.replace(/\+/g, ' '));
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         },
@@ -1958,7 +1940,7 @@ function FanFictionAPI() {
             chrome.storage.local.set({ FavoritesLastModified: Date.now() });
             chrome.runtime.sendMessage({ updated: 'Favorites', id, add: false });
             //$.toast('You have succesfully unfaved: ' + title.replace(/\+/g, ' '));
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         },
@@ -1983,7 +1965,7 @@ function FanFictionAPI() {
                 chrome.storage.local.set({ Liked: list });
                 chrome.runtime.sendMessage({ updated: 'Liked', id, add: false });
             }
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         });
@@ -2005,7 +1987,7 @@ function FanFictionAPI() {
                 chrome.storage.local.remove('shelf:' + id);
                 chrome.runtime.sendMessage({ updated: 'Bookshelves' });
             }
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         });
@@ -2024,7 +2006,7 @@ function FanFictionAPI() {
                 chrome.storage.local.set({ ReadLater: list });
                 chrome.runtime.sendMessage({ updated: 'ReadLater', id, add: true });
             }
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         });
@@ -2051,7 +2033,7 @@ function FanFictionAPI() {
                 chrome.storage.local.set({ Liked: list });
                 chrome.runtime.sendMessage({ updated: 'Liked', id, add: true });
             }
-            if (callback !== undefined) {
+            if (callback) {
                 callback();
             }
         });
@@ -2072,7 +2054,7 @@ function FanFictionAPI() {
             list.push({id: nextId, name: shelfName, fandom: fandom});
             chrome.storage.local.set({ Bookshelves: list });
             chrome.runtime.sendMessage({ updated: 'Bookshelves' });
-            if (callback !== undefined) {
+            if (callback) {
                 callback(nextId);
             }
         });
@@ -2093,7 +2075,7 @@ function FanFictionAPI() {
                     chrome.storage.local.set({[shelfName]: list});
                     chrome.runtime.sendMessage({updated: shelfName, id: storyId, add: true});
                 }
-                if (callback !== undefined) {
+                if (callback) {
                     callback();
                 }
             });
@@ -2113,7 +2095,7 @@ function FanFictionAPI() {
                         chrome.runtime.sendMessage({updated: shelfName, id: storyId, add: false});
                     }
                 }
-                if (callback !== undefined) {
+                if (callback) {
                     callback();
                 }
             });
@@ -2144,13 +2126,12 @@ progressDialog
     }
 ====================
 */
-function progressDialog(that) {
+function progressDialog(that = {}) {
     var tasks,
         dialog,
         progressBar,
         val = 0;
 
-    that = that || {};
     tasks = that.tasks || 0;
     dialog = $('<div>', {
         class: 'progress-dialog',
@@ -2261,10 +2242,7 @@ function getAo3UsersBookmarks(users, callback) {
     });
 }
 
-function getAo3BookmarksFromUser(url, callback, index, list) {
-    list = typeof list !== 'undefined' ? list : [];
-    index = typeof index !== 'undefined' ? index : 1;
-
+function getAo3BookmarksFromUser(url, callback, index = 1, list = []) {
     $.get(url + index,
         function (data) {
             list = list.concat(Array.from($(data).find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
