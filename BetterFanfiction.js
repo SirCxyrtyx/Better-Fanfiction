@@ -1180,7 +1180,12 @@ function populateBookshelf(storyIds, bookshelf, byComplete = true) {
         //add stories that aren't on bookshelf already
         if (val !== 0 && !existing.includes(val)) {
             $.get(getStoryLink(val), function (data) {
-                wrapper.append(createStoryCard(parseStoryData(data, val), i, byComplete));
+                try {
+                    wrapper.append(createStoryCard(parseStoryData(data, val), i, byComplete));
+                } catch (e) {
+                    console.log(e);
+                    console.log(`${val} did not load. It may no longer exist.`);
+                }
                 //since get requests are async, this ensures alignStoryCards runs after every storyCard has been made.
                 count--;
                 if (count === 0) {
@@ -1210,7 +1215,12 @@ function populateBookshelfAlt(stories, bookshelf) {
         loadBtn;
     part.forEach(function (val, i) {
         $.get(getStoryLink(val.k), function (data) {
-            wrapper.append(createStoryCard(parseStoryData(data, val.k), -val.v, false));
+            try {
+                wrapper.append(createStoryCard(parseStoryData(data, val.k), -val.v, false));
+            } catch (e) {
+                console.log(e);
+                console.log(`${val.k} did not load. It may no longer exist.`);
+            }
             count--;
             if (count === 0) {
                 setTimeout(alignStoryCards, 100, wrapper);
