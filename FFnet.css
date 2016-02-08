@@ -491,9 +491,10 @@ html > body {
   font-size: 1.2em;
   font-weight: 700;
   color: #555 !important;
+  cursor: pointer;
 }
 
-.story-card-list a:hover {
+.story_link:hover {
   text-decoration: underline;
   border-bottom: none;
 }

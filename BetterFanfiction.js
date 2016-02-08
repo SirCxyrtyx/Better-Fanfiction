@@ -3,12 +3,8 @@
 
 (function () {
 'use strict';
-var ffAPI = FanFictionAPI(),
-    pageType = 'browse',
-    storyid,
-    chapter,
-    storytextid,
-    path = document.location.pathname,
+const ffAPI = FanFictionAPI(),
+    transitions = ['story-story'],
     reviewControls = '<div class="review_controls"><ul class="review_page_list"></ul><ul class="review_page_info"><li><span></span></li><li><button class="btn">Newest First</button></li></ul></div>',
     bookshelfBar = '<ul class="bookshelves dropdown">' +
         '<li title="Favorites" class="bookshelf unselected" data-added="0" style="background:#ffb400"><span>Fav</span></li>' +
@@ -18,20 +14,15 @@ var ffAPI = FanFictionAPI(),
         '<li title="More" class="bookshelf dropdown-toggle unselected" data-added="0" data-toggle="dropdown"><span>...</span></li>' +
         '<ul class="dropdown-menu"></ul>' +
         '</ul>';
+let path = document.location.pathname,
+    pageType = findPageType(path),
+    storyid,
+    chapter,
+    storytextid;
 
-if (path.search(/\/s\//) !== -1) {
-    pageType = 'story';
-    //for storypage-specific css
+//for storypage-specific css
+if (pageType === 'story') {
     $('html').addClass('story-page');
-    storyid = parseInt(path.match(/\d+/), 10);
-} else if (path.search(/\/u\//) !== -1 || path.search(/\/~/) !== -1) {
-    pageType = 'user';
-} else if (path.search(/\/r\//) !== -1) {
-    pageType = 'review';
-} else if (path.search(/\/community\//) !== -1) {
-    pageType = 'group';
-} else if (path.search(/\/works\//) !== -1) {
-    pageType = 'Ao3story';
 }
 
 //Signed-in check
@@ -47,6 +38,7 @@ document.addEventListener('DOMContentLoaded', run);
 
 function run() {
     if (pageType === 'story') {
+        storyid = parseInt(path.match(/\d+/), 10);
         chapter = ($('select').length && $('select').get(0).selectedIndex) + 1;
         storyPage();
     } else {
@@ -60,14 +52,18 @@ function run() {
     $(window).on('popstate', function (e) {
         let state = e.originalEvent.state;
         if (state !== null) {
-            $.get('https://www.fanfiction.net/s/' + state.story + '/' + state.chapter, function (data) {
-                if (state.story === storyid) {
-                    loadChapterInPlace(parseStoryData(data, state.story), false, true);
-                } else {
-                    loadStoryInPlace(parseStoryData(data, state.story), true);
-                }
-                $('body').scrollTop(state.scrollPos);
-            });
+            route('https://www.fanfiction.net/s/' + state.story + '/' + state.chapter, true);
+        }
+    });
+
+    $('body').click(e => {
+        if (e.target.nodeName === 'A' && !e.ctrlKey && !e.target.hash) {
+            let url = e.target.href;
+            let transition = pageType + '-' + findPageType(url);
+            if (transitions.includes(transition)) {
+                e.preventDefault();
+                route(url);
+            }
         }
     });
 
@@ -457,7 +453,7 @@ function loadChapterInPlace(d, scrollToTop = false, back = false) {
     var chapterTitle;
 
     if (!back) {
-        history.replaceState({story: d.storyid, chapter: chapter, scrollPos: $('body').scrollTop()}, '', d.storyLink + '/' + chapter);
+        history.replaceState({story: d.storyid, chapter: chapter}, '', d.storyLink + '/' + chapter);
     }
     chapter = d.currentChapter;
 
@@ -546,7 +542,7 @@ function loadStoryInPlace(d, back = false) {
         storyHeader = createStoryHeader(d);
 
     if (!back) {
-        history.replaceState({story: storyid, chapter: chapter, scrollPos: $('body').scrollTop()}, '', document.location.href);
+        history.replaceState({story: storyid, chapter: chapter}, '', document.location.href);
     }
     chapter = d.currentChapter;
     storyid = d.storyid;
@@ -569,8 +565,6 @@ function loadStoryInPlace(d, back = false) {
     if (!back) {
         history.pushState({story: d.storyid, chapter: chapter}, '', d.storyLink + '/' + chapter);
     }
-    //close any modals
-    $('.modal-backdrop.fade.in').trigger('click');
 
     setUpBookshelfBar('#profile_top', d);
     setVisited(true, chapter);
@@ -991,8 +985,9 @@ function convertStoryLinks() {
 }
 
 function openStoryLanding(e) {
-    if (!e.ctrlKey) {
-        e.preventDefault();
+    if (e.ctrlKey) {
+        window.open(`https://www.fanfiction.net/s/${$(e.currentTarget).attr('data-original')}`, '_blank');
+    } else {
         let storyId = $(e.currentTarget).attr('data-original'),
             loadedStorys = $('#story_landing .story_container').hide();
         if (loadedStorys.filter('[data-id=' + storyId + ']').show().length === 0) {
@@ -1007,18 +1002,43 @@ function openStoryLanding(e) {
     }
 }
 
-function storyLinkClick(e) {
-    if (!e.ctrlKey) {
-        e.preventDefault();
-        let storyId = $(e.currentTarget).attr('data-story'),
-            link = e.currentTarget.href;
-
-        if (pageType === 'story') {
-            $.get(link, function (data) {
-                loadStoryInPlace(parseStoryData(data, storyId));
-            });
-        }
+function route(url, popState = false) {
+    let transition = pageType + '-' + findPageType(url);
+    if (transitions.includes(transition)) {
+        $.get(url, function (data) {
+            switch (transition) {
+                case 'story-story':
+                    let storyData = parseStoryData(data, parseInt(url.match(/\d+/), 10));
+                    if (storyData.storyid === storyid) {
+                        loadChapterInPlace(parseStoryData(data, storyData.storyid), false, popState);
+                    } else {
+                        loadStoryInPlace(parseStoryData(data, storyData.storyid), popState);
+                    }
+                    //close any modals
+                    $('.modal-backdrop.fade.in').trigger('click');
+                    break;
+                default:
+                    break;
+            }
+        });
+        return true;
     }
+    return false;
+}
+
+function findPageType(url) {
+    if (url.search(/\/s\//) !== -1) {
+        return 'story';
+    } else if (url.search(/\/u\//) !== -1 || url.search(/\/~/) !== -1) {
+        return 'user';
+    } else if (url.search(/\/r\//) !== -1) {
+        return 'review';
+    } else if (url.search(/\/community\//) !== -1) {
+        return 'group';
+    } else if (url.search(/\/works\//) !== -1) {
+        return 'Ao3story';
+    }
+    return 'browse';
 }
 
 function populateStoryLanding(d) {
@@ -1027,9 +1047,8 @@ function populateStoryLanding(d) {
         el = $('<div class="story_container" data-id=' + d.storyid + '> <div class="story_content_box" > <div class="no_padding"> <div class="title"> <span class="content_rating"></span> <div> <a class="story_name" href=""></a> <div class="author"> <span class="by">by</span> <a href=""></a> </div> </div> </div> <div class="story"> <div class="story_data"> <div class="right" style="margin-left:0px;"> <div class="padding"> <div class="description"><img src="" class="story_image"><hr> </div> <div class="chapter_list"> <ul class="chapters"> <li class="bottom"> <span class="status"></span> <div class="word_count"> <b></b> words total </div> </li> </ul> </div> </div> </div> </div> <div class="extra_story_data"> <div class="inner_data"> <span class="date_approved"> <div> <span class="published">Published</span> <br> <span></span> </div> </span> <span class="last_modified"> <div> <span class="published">Updated</span> <br> <span></span> </div> </span> </div> </div> </div> </div> </div></div>'),
         chapterList = d.data.find('select').first().children();
 
-    el.find('.story_name').html(d.title).click(storyLinkClick).attr({
+    el.find('.story_name').html(d.title).attr({
         href: d.storyLink,
-        'data-story': d.storyid,
     });
     el.find('.author').append(d.authorElement);
     el.find('img.story_image').attr('src', d.storyImageLink);
@@ -1060,9 +1079,8 @@ function populateStoryLanding(d) {
         chapterTitle = chapterList.length ? chapterList.eq(i - 1).html().replace(/[0-9]+\. /, '') : 'Chapter 1';
         el.find('.chapters').prepend('<div class="chapter_container ">' +
             '<li><div data-chapter="' + i + '" class="chapter-read-icon" title="(Click to toggle read status)">&#10004;</div>' +
-            '<a class="chapter_link" href="' + d.storyLink + '/' + i + '" data-story="' + d.storyid + '" data-chapter="' + i + '">' + chapterTitle + '</a></li></div>');
+            '<a class="chapter_link" href="' + d.storyLink + '/' + i + '">' + chapterTitle + '</a></li></div>');
     }
-    el.find('.chapter_link').click(storyLinkClick);
 
     ffAPI.getReadObj(d.storyid, function (readObj) {
         var readChapters = readObj.chapters;
@@ -1389,7 +1407,7 @@ function createStoryCard(d, index, byComplete = true) {
     var infoString,
         storyCard = $('<li data-story="' + d.storyid + '"><div class="story-card-container"><div class="story-card"><h2>' +
                         '<span class="content_rating">' + d.rating + '</span>' +
-                        '<a class="story_link" href="' + getStoryLink(d.storyid) + '" data-original="' + d.storyid + '">' + d.title + '</a>' +
+                        '<span class="story_link" data-original="' + d.storyid + '">' + d.title + '</a>' +
                         '<span class="status"></span></h2><div class="story-card-content">' +
                         '<span class="short_description">' + d.description +
                         '<span class="by">&nbsp;<b>&#183;</b>&nbsp;' + d.authorElement +
