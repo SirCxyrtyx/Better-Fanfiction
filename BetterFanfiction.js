@@ -225,6 +225,7 @@ function storyPage() {
                     });
                     $('.review_page_list .selected').removeClass('selected');
                     $('.review_page_list button[data-page="' + page + '"]').addClass('selected');
+                    $(e.target).blur();
                 });
 
                 $('.review_page_info button').click(function(e) {
@@ -302,12 +303,31 @@ function groupPage() {
                 $(this).html(easydate(this.dataset.xutime));
             });
             history.pushState({pathParts}, '', 'https://www.fanfiction.net' + pathParts[0] + '1' + pathParts[1]);
+            $('.badge').html($('.z-list:visible').length);
+            $('.z-list').each((i,el) => {
+                el.dataset.complete = /Complete/.test($(el).find('.xgray').text());
+            });
+
+            $('select[name="statusid"]').change(function(e) {
+                if (e.target.selectedIndex === 1) {
+                    $('.z-list').removeClass('zhide').filter(function(i, el) {
+                        return $(el).data('complete');
+                    }).addClass('zhide');
+                } else if (e.target.selectedIndex === 2) {
+                    $('.z-list').removeClass('zhide').filter(function(i, el) {
+                        return !$(el).data('complete');
+                    }).addClass('zhide');
+                } else {
+                    $('.z-list').removeClass('.zhide');
+                }
+                $('.badge').html($('.z-list:visible').length);
+            });
         });
     });
 
     $('div + hr').before('Include: <input type="text" class="story-filter"> Exclude: <input type="text" class="story-filter"><span class="badge">0</span>');
     $('.story-filter').on('input', function () {
-        $('.z-list').show().filter(function () {
+        $('.z-list').addClass('hide').filter(function () {
             var exclude;
             if ($(this).find('.xgray').html().search($('.story-filter').eq(0).val()) === -1) {
                 return true;
@@ -317,14 +337,15 @@ function groupPage() {
                 return $(this).find('.xgray').html().search(exclude) !== -1;
             }
             return false;
-        }).hide();
+        }).removeClass('hide');
         $('.badge').html($('.z-list:visible').length);
     });
 }
 
 function userPage() {
     //triggers image loading on tab switch
-    //$('#mytab a').click(() => setTimeout($(window).trigger(), 100, 'resize'));
+    //needs to be attribute handler to execute in the same context as the lazy loading was registered
+    $('#mytab a').attr('onclick', '$(window).trigger("resize")');
 
     [{id:'st', class: '.mystories'}, {id:'fs', class: '.favstories'}].forEach(function (val, i) {
         $('#' + val.id + ' > div').eq(0).after('Include: <input type="text" class="' + val.id + '-filter"> Exclude: <input type="text" class="' + val.id + '-filter">');
@@ -1406,9 +1427,9 @@ function parseAo3StoryData(d, storyid) {
 function createStoryCard(d, index, byComplete = true) {
     var infoString,
         storyCard = $('<li data-story="' + d.storyid + '"><div class="story-card-container"><div class="story-card"><h2>' +
-                        '<span class="content_rating">' + d.rating + '</span>' +
-                        '<span class="story_link" data-original="' + d.storyid + '">' + d.title + '</a>' +
-                        '<span class="status"></span></h2><div class="story-card-content">' +
+                        '<span class="content_rating">' + d.rating + '</span><span class="status"></span>' +
+                        '<span class="story_link" data-original="' + d.storyid + '">' + d.title + '</span>' +
+                        '</h2><div class="story-card-content">' +
                         '<span class="short_description">' + d.description +
                         '<span class="by">&nbsp;<b>&#183;</b>&nbsp;' + d.authorElement +
                         '</span></span></div><span class="info"></span></div></div></li>');
@@ -1525,14 +1546,10 @@ function fandomsInList(listClass) {
         }
 
     });
-    for (let prop in also) {
-        if (also.hasOwnProperty(prop)) {
-            list.push({
-                k: prop,
-                v: also[prop],
-            });
-        }
-    }
+    list = Object.keys(also).map(prop => ({
+        k: prop,
+        v: also[prop],
+    }));
     return list.sort((a, b) => b.v - a.v);
 }
 
@@ -1730,15 +1747,10 @@ function FanFictionAPI() {
                         }
 
                     });
-                    list = [];
-                    for (let prop in also) {
-                        if (also.hasOwnProperty(prop)) {
-                            list.push({
-                                k: prop,
-                                v: also[prop],
-                            });
-                        }
-                    }
+                    list = Object.keys(also).map(prop => ({
+                        k: prop,
+                        v: also[prop],
+                    }));
                     console.log('Found ' + list.length + ' favorited stories.');
                     list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
                     console.log(list.length + ' of which were faved by more than one person.');
@@ -1768,15 +1780,10 @@ function FanFictionAPI() {
                 }
 
             });
-            list = [];
-            for (let prop in also) {
-                if (also.hasOwnProperty(prop)) {
-                    list.push({
-                        k: prop,
-                        v: also[prop],
-                    });
-                }
-            }
+            list = Object.keys(also).map(prop => ({
+                k: prop,
+                v: also[prop],
+            }));
             console.log('Found ' + list.length + ' favorited stories.');
             list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
             console.log(list.length + ' of which were faved by more than one person.');
@@ -2248,15 +2255,10 @@ function getAo3UsersBookmarks(users, callback) {
                     }
 
                 });
-                list = [];
-                for (let prop in also) {
-                    if (also.hasOwnProperty(prop)) {
-                        list.push({
-                            k: prop,
-                            v: also[prop],
-                        });
-                    }
-                }
+                list = Object.keys(also).map(prop => ({
+                    k: prop,
+                    v: also[prop],
+                }));
                 console.log('Found ' + list.length + ' bookmarked stories.');
                 list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
                 console.log(list.length + ' of which were bookmarked by more than one person.');
