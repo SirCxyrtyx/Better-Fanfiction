@@ -652,16 +652,15 @@ function setUpBookshelfBar(container, storyData) {
         }
     });
 
-    ffAPI.getBookshelves(function (shelves) {
+    ffAPI.getBookshelves(instantiateDropdown);
+
+    function instantiateDropdown(shelves) {
         $('<li title="Add" class="shelf"><input type="text" placeholder="Bookshelf Name"></input><button class="btn">Add</button></li>')
             .appendTo($('.bookshelves .dropdown-menu', container));
         shelves.forEach(function (val) {
             var shelfId = val.id;
 
-            if (storyData.fandom[0] === val.fandom[0] ||
-              (storyData.fandom.length > 1 && storyData.fandom[1] === val.fandom[0]) ||
-              (val.fandom.length > 1 && storyData.fandom[0] === val.fandom[1]) ||
-              (val.fandom.length > 1 && storyData.fandom.length > 1 && storyData.fandom[1] === val.fandom[1])) {
+            if (fandomsMatch(storyData.fandom, val.fandom)) {
 
                 $('<li title="' + shelfId + '" class="shelf"><span>' + val.name + '</span><i class="icon-ok-circled"></i></li>')
                     .insertBefore($('.bookshelves .dropdown-menu li[title="Add"]', container))
@@ -697,7 +696,7 @@ function setUpBookshelfBar(container, storyData) {
             }
             $(this).siblings('input').val('');
         });
-    });
+    }
 
     $('.bookshelf', container).click(function () {
         switch ($(this).attr('title')) {
@@ -745,7 +744,10 @@ function setUpBookshelfBar(container, storyData) {
     }
 
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.updated && request.id === storyId) {
+        if (request.updated == 'Bookshelves' && fandomsMatch(storyData.fandom, request.fandom)) {
+            $('.bookshelves .dropdown-menu', container).children().remove();
+            ffAPI.getBookshelves(instantiateDropdown);
+        } else if (request.updated && request.id === storyId) {
             switch (request.updated){
                 case 'Liked':
                     updateShelf('Liked', request.add);
@@ -758,8 +760,6 @@ function setUpBookshelfBar(container, storyData) {
                     break;
                 case 'Alerts':
                     updateShelf('Following', request.add);
-                    break;
-                case 'Bookshelves':
                     break;
                 default:
                     if (request.updated.startsWith('shelf:')) {
@@ -2088,7 +2088,7 @@ function FanFictionAPI() {
 
             list.push({id: nextId, name: shelfName, fandom: fandom});
             chrome.storage.local.set({ Bookshelves: list });
-            chrome.runtime.sendMessage({ updated: 'Bookshelves' });
+            chrome.runtime.sendMessage({ updated: 'Bookshelves', id: nextId, name: shelfName, fandom: fandom });
             if (callback) {
                 callback(nextId);
             }
@@ -2235,6 +2235,13 @@ function easydate(unix) {
     } else {
         return monthShort + ' ' + day + ', ' + year;
     }
+}
+
+function fandomsMatch(a, b) {
+    return a[0] === b[0] ||
+            (a.length > 1 && a[1] === b[0]) ||
+            (b.length > 1 && a[0] === b[1]) ||
+            (b.length > 1 && a.length > 1 && a[1] === b[1]);
 }
 
 function htmlEntities(str) {
