@@ -376,7 +376,7 @@ function userPage() {
                 '<span class="control-label">' + v.k + ' (' + v.v + ')</span>' +
             '</label>').appendTo('#' + val.id + ' .fandoms-list .panel-body').click(function (event) {
 
-                var s = $(val.class).filter((i,el) => JSON.parse(el.dataset.category).includes(this.dataset.fandom));
+                var s = $(val.class).filter((i,el) => JSON.parse(el.dataset.category).includes(htmlEntities(this.dataset.fandom)));
                 if ($('input', this)[0].checked) {
                     s.removeClass('zhide');
                 } else {
@@ -2235,6 +2235,10 @@ function easydate(unix) {
     } else {
         return monthShort + ' ' + day + ', ' + year;
     }
+}
+
+function htmlEntities(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function getAo3UsersBookmarks(users, callback) {
