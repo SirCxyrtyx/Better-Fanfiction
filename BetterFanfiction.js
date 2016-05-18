@@ -744,7 +744,7 @@ function setUpBookshelfBar(container, storyData) {
     }
 
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.updated == 'Bookshelves' && fandomsMatch(storyData.fandom, request.fandom)) {
+        if (request.updated === 'Bookshelves' && fandomsMatch(storyData.fandom, request.fandom)) {
             $('.bookshelves .dropdown-menu', container).children().remove();
             ffAPI.getBookshelves(instantiateDropdown);
         } else if (request.updated && request.id === storyId) {
@@ -772,6 +772,7 @@ function setUpBookshelfBar(container, storyData) {
 }
 
 function setUpBookshelves() {
+    var shelfSelectBackup;
     $('<div class="modal fade hide" id="bookshelf_display" style="display: none;">' +
         '<div class="modal-header">' +
         '<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>' +
@@ -829,7 +830,7 @@ function setUpBookshelves() {
             .append('<option value="' + val.replace(/[^_a-zA-Z-]/g, '') + '">' + val + '</option>');
         });
 
-        $('#shelf-select').chainedTo('#fandom-select');
+        shelfSelectBackup = $('#shelf-select').chainedTo('#fandom-select');
 
         $('#shelf-select').change(function (e) {
             var target = e.target,
@@ -959,13 +960,30 @@ function setUpBookshelves() {
                     updateShelf('#track_tab');
                     break;
                 case 'Bookshelves':
+                    if (request.added) {
+                        let fandoms = request.fandom.map(s => s.replace(/[^_a-zA-Z-]/g, ''));
+                        shelfSelectBackup.append('<option class="' + fandoms.join(' ') + '" data-id="' + request.id + '">' + request.name + '</option>');
+                        $('#bookshelf_display .tab-content')
+                        .append('<div role="tabpanel" class="tab-pane" id="shelf_tab_' + request.id + '"><ul class="story-card-list list_boxes"></ul></div>');
 
+                        fandoms.forEach(function (item) {
+                            //is this first shelf for this fandom?
+                            if ($('#fandom-select .' + item).length === 0) {
+                                $('#fandom-select').append('<option value="' + item + '">' + item + '</option>');
+                            //if the fandom is already in the list, then there is more than one shelf, and the default(--) needs to be displayed to prevent auto-selecting a shelf
+                            } else {
+                                if (!$('#default-shelf').hasClass(item)) {
+                                    $('#default-shelf').addClass(item);
+                                }
+                            }
+                        });
+                    }
                     break;
                 case 'Read':
                     let storyLanding = $('#story_landing .story_container[data-id=' + request.id + ']');
                     if (storyLanding.length) {
                         ffAPI.getReadObj(request.id, function (readObj) {
-                            var readChapters = readObj.chapters;
+                            let readChapters = readObj.chapters;
                             $('.chapter-read-icon', storyLanding).each(function (index, element) {
                                 if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
                                     $(this).addClass('chapter-read');
@@ -2088,7 +2106,7 @@ function FanFictionAPI() {
 
             list.push({id: nextId, name: shelfName, fandom: fandom});
             chrome.storage.local.set({ Bookshelves: list });
-            chrome.runtime.sendMessage({ updated: 'Bookshelves', id: nextId, name: shelfName, fandom: fandom });
+            chrome.runtime.sendMessage({ updated: 'Bookshelves', id: nextId, name: shelfName, fandom: fandom, added: true });
             if (callback) {
                 callback(nextId);
             }

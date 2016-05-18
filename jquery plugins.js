@@ -285,12 +285,11 @@ jQuery.fn.fixed_center = function() {
     'use strict';
 
     $.fn.chained = function(parent_selector, options) {
-
-        return this.each(function() {
+        var backup = $(this).clone();
+        this.each(function() {
 
             /* Save this to child because this changes when scope changes. */
-            var child   = this;
-            var backup = $(child).clone();
+            var child = this;
 
             /* Handles maximum two parents now. */
             $(parent_selector).each(function() {
@@ -352,6 +351,7 @@ jQuery.fn.fixed_center = function() {
                 }
             }
         });
+        return backup;
     };
 
     /* Alias for those who like to use more English like syntax. */
