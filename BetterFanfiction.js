@@ -1073,6 +1073,8 @@ function setUpBookshelves() {
                             $('.chapter-read-icon', storyLanding).each(function (index, element) {
                                 if (readChapters.indexOf(parseInt($(this).data('chapter'), 10)) !== -1) {
                                     $(this).addClass('chapter-read');
+                                } else {
+                                    $(this).removeClass('chapter-read');
                                 }
                             });
                         });

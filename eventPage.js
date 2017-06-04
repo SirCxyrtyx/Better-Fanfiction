@@ -78,7 +78,7 @@ function onDBUpdate (snap) {
                 } else if (key === 'AlertsLastModified') {
                     msgObj.updated = 'Alerts';
                 } else if (key === 'Bookshelves') {
-                    let oldData = x[key],
+                    let oldData = x[key] || {},
                         newData = snap.val();
                     newData.forEach((shelf, i) => {
                         if(!jsonEqual(shelf, oldData[i])) {

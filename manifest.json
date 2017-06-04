@@ -15,8 +15,7 @@
   ],
 
   "background": {
-    "page": "eventPage.html",
-    "persistent": false
+    "page": "eventPage.html"
   },
 
   "content_scripts": [
