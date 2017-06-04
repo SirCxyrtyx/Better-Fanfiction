@@ -6,6 +6,7 @@
   "version": "1.0",
 
   "permissions": [
+    "identity",
     "storage",
     "unlimitedStorage",
     "https://www.fanfiction.net/",
@@ -14,7 +15,7 @@
   ],
 
   "background": {
-    "scripts": ["eventPage.js"],
+    "page": "eventPage.html",
     "persistent": false
   },
 
@@ -35,5 +36,24 @@
 
   "web_accessible_resources": [
     "spinner.gif"
-  ]
+  ],
+
+  "content_security_policy":"script-src 'self' https://www.gstatic.com/ https://*.firebaseio.com https://www.googleapis.com; object-src 'self'",
+  "oauth2": {
+    "client_id": "658655686523-p6r9jdad91rao4skonmc0d2m1p4ej71e.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "key": "-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA3WVYFX1LLWsn2oynj3Xl
+ieT2JKl6eTelvy+XwjsnzfmvUqQnfOKjHuWLLoiPIY99qF6FLJ5LTw5ly+h59ypW
+d9aY9utjbpdL3TQb/V5Tb9zyvfvHkKxkaZnPt9CELouzpCDyaf2dh5l4Le9dg3q/
+NSrHKybCbDdicXwKUFS1/8Xa9+w/OTANGsPnTRX0wNYUsQ45L87MDcFm1LUzh7t1
+cLjdiU55yqfZg9E10iLy/U8Ir+wtQZ9ZBoA3AB/F4pCWI9/SnWrh/hr1prQAbF6L
+AARBK5OirOXlhNQttE5nh+ypJIV+3ElbhXDd4NA7qVNhD2UXLeU0r3QrWZ24FGW+
++QIDAQAB
+-----END PUBLIC KEY-----
+"
 }

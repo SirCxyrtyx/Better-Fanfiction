@@ -24,16 +24,22 @@ if (pageType === 'story') {
     $('html').addClass('story-page');
 }
 
-//Signed-in check
+//Fanfiction.net sign-in check
 if (document.cookie.search('funn=') === -1 && path !== '/login.php' && !pageType.startsWith('Ao3')) {
     document.addEventListener('DOMContentLoaded', function () {
         $.toast('You\'re not logged in.', 2500);
     });
 } else {
     ffAPI.userid = -1;
+    //Firebase Auth check
+    chrome.runtime.sendMessage({authCheck : true}, response => {
+        if(response.authStatus){
+            document.addEventListener('DOMContentLoaded', run);
+        } else {
+            $.toast('Firebase status: Signed Out');
+        }
+    });
 }
-
-document.addEventListener('DOMContentLoaded', run);
 
 function run() {
     if (pageType === 'story') {
@@ -251,8 +257,7 @@ function storyPage() {
                             settings = {};
                         }
                         settings.reviewOrder = order;
-                        chrome.storage.local.set({Settings: settings});
-                        chrome.runtime.sendMessage({updated: 'Settings.reviewOrder', order});
+                        chrome.runtime.sendMessage({updated: 'Settings', val: settings});
                     });
                     el.blur();
                 });
@@ -807,6 +812,7 @@ function setUpBookshelfBar(container, storyData) {
     });
 
     function updateShelf(title, add) {
+
         if (add) {
             $('.bookshelves [title="' + title + '"]', container).removeClass('unselected').addClass('selected');
         } else {
@@ -815,30 +821,39 @@ function setUpBookshelfBar(container, storyData) {
     }
 
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-        if (request.updated === 'Bookshelves' && fandomsMatch(storyData.fandom, request.fandom)) {
-            $('.bookshelves .dropdown-menu', container).children().remove();
-            ffAPI.getBookshelves(instantiateDropdown);
-        } else if (request.updated && request.id === storyId) {
-            switch (request.updated){
+        switch (request.updated){
                 case 'Liked':
-                    updateShelf('Liked', request.add);
+                    ffAPI.getLiked(function (list) {
+                        updateShelf('Liked', list.indexOf(storyId) !== -1);
+                    });
                     break;
                 case 'ReadLater':
-                    updateShelf('Read It Later', request.add);
+                    ffAPI.getReadLater(function (list) {
+                        updateShelf('Read It Later', list.indexOf(storyId) !== -1);
+                    });
                     break;
                 case 'Favorites':
-                    updateShelf('Favorites', request.add);
+                    ffAPI.getFavoritedList(function (list) {
+                        updateShelf('Favorites', list.indexOf(storyId) !== -1);
+                    });
                     break;
                 case 'Alerts':
-                    updateShelf('Following', request.add);
+                    ffAPI.getFollowingList(function (list) {
+                        updateShelf('Following', list.indexOf(storyId) !== -1);
+                    });
+                    break;
+                case 'Bookshelves':
+                    $('.bookshelves .dropdown-menu', container).children().remove();
+                    ffAPI.getBookshelves(instantiateDropdown);
+                    break;
+                case 'Shelf':
+                    ffAPI.bookshelf.get(request.id, function (list) {
+                            updateShelf(request.id, list.indexOf(storyId) !== -1);
+                    });
                     break;
                 default:
-                    if (request.updated.startsWith('shelf:')) {
-                        updateShelf(request.updated.substr(6), request.add);
-                    }
-                    break;
+                    return;
             }
-        }
     });
 }
 
@@ -1063,13 +1078,15 @@ function setUpBookshelves() {
                         });
                     }
                     break;
-                default:
-                    if (request.updated.startsWith('shelf:')) {
-                        $('#shelf_tab_' + request.updated.substr(6)).removeClass('populated');
-                        if ($('#shelf_tab_' + request.updated.substr(6)).hasClass('active')) {
-                            $('#shelf-select').trigger('change');
-                        }
+                case 'Shelf':
+                    //mark for refresh
+                    $('#shelf_tab_' + request.id).removeClass('populated');
+                    //manual refresh if currently open
+                    if ($('#shelf_tab_' + request.id).hasClass('active')) {
+                        $('#shelf-select').trigger('change');
                     }
+                    break;
+                default:
                     break;
             }
         }
@@ -1279,7 +1296,6 @@ function setVisited(add, chap = chapter, id = false) {
     }
     key = 'Read:' + id;
     ffAPI.getReadObj(id, function (readObj) {
-        var storeObj = {};
         //regular pageview
         if (accessed && add) {
             readObj.lastRead = Math.trunc(Date.now() * 0.00001);
@@ -1291,16 +1307,13 @@ function setVisited(add, chap = chapter, id = false) {
         } else if (add === false) {
             readObj.chapters.splice(readObj.chapters.indexOf(chap), 1);
             if (readObj.chapters.length < 1) {
-                chrome.storage.local.remove(key);
-                return;
+                readObj = null;
             }
         //if already marked as read and this isn't a chapter visit
         } else if (!accessed) {
             return;
         }
-        storeObj[key] = readObj;
-        chrome.storage.local.set(storeObj);
-        chrome.runtime.sendMessage({updated: 'Read', id});
+        chrome.runtime.sendMessage({updated: key, val: readObj});
     });
 }
 
@@ -1760,11 +1773,9 @@ function FanFictionAPI() {
                     $.toast('We are unable to process your request due to an network error. Please try again later.');
                 } else {
                     if (type === 'follow') {
-                        chrome.storage.local.set({ AlertsLastModified: Date.now() });
-                        chrome.runtime.sendMessage({updated: 'Alerts', id, add: true});
+                        chrome.runtime.sendMessage({updated: 'AlertsLastModified', val: Date.now()});
                     } else {
-                        chrome.storage.local.set({ FavoritesLastModified: Date.now() });
-                        chrome.runtime.sendMessage({updated: 'Favorites', id, add: true});
+                        chrome.runtime.sendMessage({updated: 'FavoritesLastModified', val: Date.now()});
                     }
                     $.toast('We have successfully processed the following:' + data.payload_data, 3000); // jscs:ignore requireCamelCaseOrUpperCaseIdentifiers
                     if (callback) {
@@ -2066,8 +2077,7 @@ function FanFictionAPI() {
             index = items.ReadLater.indexOf(id);
             if (index !== -1) {
                 list.splice(index, 1);
-                chrome.storage.local.set({ ReadLater: list });
-                chrome.runtime.sendMessage({ updated: 'ReadLater', id, add: false });
+                chrome.runtime.sendMessage({ updated: 'ReadLater', val: list });
             }
             if (callback) {
                 callback();
@@ -2086,8 +2096,7 @@ function FanFictionAPI() {
             'rids[]': id,
         },
         function (data) {
-            chrome.storage.local.set({ AlertsLastModified: Date.now() });
-            chrome.runtime.sendMessage({ updated: 'Alerts', id, add: false });
+            chrome.runtime.sendMessage({ updated: 'AlertsLastModified', val: Date.now()});
             //$.toast('You have succesfully unfollowed: ' + title.replace(/\+/g, ' '));
             if (callback) {
                 callback();
@@ -2110,8 +2119,7 @@ function FanFictionAPI() {
             'rids[]': id,
         },
         function (data) {
-            chrome.storage.local.set({ FavoritesLastModified: Date.now() });
-            chrome.runtime.sendMessage({ updated: 'Favorites', id, add: false });
+            chrome.runtime.sendMessage({ updated: 'FavoritesLastModified', val: Date.now() });
             //$.toast('You have succesfully unfaved: ' + title.replace(/\+/g, ' '));
             if (callback) {
                 callback();
@@ -2135,8 +2143,7 @@ function FanFictionAPI() {
             index = items.Liked.indexOf(id);
             if (index !== -1) {
                 list.splice(index, 1);
-                chrome.storage.local.set({ Liked: list });
-                chrome.runtime.sendMessage({ updated: 'Liked', id, add: false });
+                chrome.runtime.sendMessage({ updated: 'Liked', val: list });
             }
             if (callback) {
                 callback();
@@ -2144,7 +2151,7 @@ function FanFictionAPI() {
         });
     };
 
-    this.removeBookshelf = function (id, callback) {
+    /*this.removeBookshelf = function (id, callback) {
         chrome.storage.local.get('Bookshelves', function (items) {
             var index,
                 list;
@@ -2155,16 +2162,15 @@ function FanFictionAPI() {
             }
             index = items.Bookshelves.findIndex(el => el.id === id);
             if (index !== -1) {
-                list.splice(index, 1);
-                chrome.storage.local.set({ Bookshelves: list });
-                chrome.storage.local.remove('shelf:' + id);
-                chrome.runtime.sendMessage({ updated: 'Bookshelves' });
+                list[index] = null;
+                chrome.runtime.sendMessage({ updated: 'Bookshelves', val: list });
+                chrome.runtime.sendMessage({ updated: 'shelf:' + id, val: null });
             }
             if (callback) {
                 callback();
             }
         });
-    };
+    };*/
 
     this.addToRil = function (id, callback) {
         chrome.storage.local.get('ReadLater', function (items) {
@@ -2176,8 +2182,7 @@ function FanFictionAPI() {
             }
             if (list.indexOf(id) === -1) {
                 list.push(id);
-                chrome.storage.local.set({ ReadLater: list });
-                chrome.runtime.sendMessage({ updated: 'ReadLater', id, add: true });
+                chrome.runtime.sendMessage({ updated: 'ReadLater', val: list});
             }
             if (callback) {
                 callback();
@@ -2203,8 +2208,7 @@ function FanFictionAPI() {
             }
             if (list.indexOf(id) === -1) {
                 list.push(id);
-                chrome.storage.local.set({ Liked: list });
-                chrome.runtime.sendMessage({ updated: 'Liked', id, add: true });
+                chrome.runtime.sendMessage({ updated: 'Liked', val: list});
             }
             if (callback) {
                 callback();
@@ -2218,15 +2222,14 @@ function FanFictionAPI() {
                 nextId;
             if (items.Bookshelves) {
                 list = items.Bookshelves;
-                nextId = list[list.length - 1].id + 1;
+                nextId = list.length;
             } else {
                 list = [];
                 nextId = 0;
             }
 
-            list.push({id: nextId, name: shelfName, fandom: fandom});
-            chrome.storage.local.set({ Bookshelves: list });
-            chrome.runtime.sendMessage({ updated: 'Bookshelves', id: nextId, name: shelfName, fandom: fandom, added: true });
+            list[nextId] = ({id: nextId, name: shelfName, fandom: fandom});
+            chrome.runtime.sendMessage({ updated: 'Bookshelves', val: list });
             if (callback) {
                 callback(nextId);
             }
@@ -2245,8 +2248,7 @@ function FanFictionAPI() {
                 }
                 if (list.indexOf(storyId) === -1) {
                     list.push(storyId);
-                    chrome.storage.local.set({[shelfName]: list});
-                    chrome.runtime.sendMessage({updated: shelfName, id: storyId, add: true});
+                    chrome.runtime.sendMessage({updated: shelfName, val: list});
                 }
                 if (callback) {
                     callback();
@@ -2264,8 +2266,7 @@ function FanFictionAPI() {
                     index = items[shelfName].indexOf(storyId);
                     if (index !== -1) {
                         list.splice(index, 1);
-                        chrome.storage.local.set({[shelfName]: list});
-                        chrome.runtime.sendMessage({updated: shelfName, id: storyId, add: false});
+                        chrome.runtime.sendMessage({updated: shelfName, val: list});
                     }
                 }
                 if (callback) {
