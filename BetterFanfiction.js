@@ -62,12 +62,16 @@ function run() {
     $('body').click(e => {
         if (e.target.nodeName === 'A' && !e.ctrlKey && !e.target.hash) {
             let url = e.target.href;
-            let transition = pageType + '-' + findPageType(url);
+            const urlType = findPageType(url);
+            let transition = pageType + '-' + urlType;
             //seemingly redundant check is neccesary because passing control to route()
             //causes link to be followed before it returns (no idea why)
             if (transitions.includes(transition)) {
                 e.preventDefault();
                 route(url);
+            } else if (urlType === 'Ao3story') {
+                e.preventDefault();
+                window.open(url, '_blank');
             }
         }
     });
@@ -82,10 +86,17 @@ function run() {
             .wrap('<tr><td style="background-color: inherit;"></td></tr>').before($('center'));
     } else if (pageType === 'group') {
         groupPage();
-    }
+    } 
 
     $('<div class="modal fade hide" id="story_landing" style="display: none;"><div class="modal-body"></div></div>')
         .appendTo('body');
+    
+    if (pageType === 'Ao3story') {
+        $('#main > .wrapper').append(bookshelfBar)
+        let storyid = 'a' + path.match(/\d+/)[0];
+        let storyData = parseAo3StoryData($('html'), storyid)
+        setUpBookshelfBar('#main > .wrapper', storyData);
+    }
 }
 
 function createStoryHeader(d) {
@@ -698,23 +709,25 @@ function setUpBookshelfBar(container, storyData) {
             $(this).toggleClass('unselected');
         };
 
-    ffAPI.getFollowingList(function (list) {
-        $.each(list, function (i,v) {
-            if (v === storyId) {
-                $(' li.bookshelf[title="Following"]', container).removeClass('unselected').addClass('selected');
-                return false;
-            }
+    if (!storyData.Ao3) {
+        ffAPI.getFollowingList(function (list) {
+            $.each(list, function (i,v) {
+                if (v === storyId) {
+                    $(' li.bookshelf[title="Following"]', container).removeClass('unselected').addClass('selected');
+                    return false;
+                }
+            });
         });
-    });
-
-    ffAPI.getFavoritedList(function (list) {
-        $.each(list, function (i,v) {
-            if (v === storyId) {
-                $('li.bookshelf[title="Favorites"]', container).removeClass('unselected').addClass('selected');
-                return false;
-            }
+    
+        ffAPI.getFavoritedList(function (list) {
+            $.each(list, function (i,v) {
+                if (v === storyId) {
+                    $('li.bookshelf[title="Favorites"]', container).removeClass('unselected').addClass('selected');
+                    return false;
+                }
+            });
         });
-    });
+    }
 
     ffAPI.getReadLater(function (list) {
         if (list.indexOf(storyId) !== -1) {
@@ -774,20 +787,24 @@ function setUpBookshelfBar(container, storyData) {
         });
     }
 
-    $('.bookshelf', container).click(function () {
+    $('.bookshelf', container).click(function (e) {
         switch ($(this).attr('title')) {
             case 'Favorites':
-                if ($(this).hasClass('selected')) {
-                    ffAPI.unfav(storyId, toggle.bind(this));
-                } else {
-                    ffAPI.fav(storyId, toggle.bind(this));
+                if (!storyData.Ao3) {
+                    if ($(this).hasClass('selected')) {
+                        ffAPI.unfav(storyId, toggle.bind(this));
+                    } else {
+                        ffAPI.fav(storyId, toggle.bind(this));
+                    }
                 }
                 break;
             case 'Following':
-                if ($(this).hasClass('selected')) {
-                    ffAPI.unfollow(storyId, toggle.bind(this));
-                } else {
-                    ffAPI.follow(storyId, toggle.bind(this));
+                if (!storyData.Ao3) {
+                    if ($(this).hasClass('selected')) {
+                        ffAPI.unfollow(storyId, toggle.bind(this));
+                    } else {
+                        ffAPI.follow(storyId, toggle.bind(this));
+                    }
                 }
                 break;
             case 'Read It Later':
@@ -805,6 +822,7 @@ function setUpBookshelfBar(container, storyData) {
                 }
                 break;
             case 'More':
+                e.preventDefault();
                 break;
             default:
                 toggle(this);
@@ -884,7 +902,7 @@ function setUpBookshelves() {
     //FFnet
     $('<div class="xmenu_item"><a class="show-bookshelves-popup">Bookshelves</a></div>').appendTo('.zui tr > td:nth-child(1)');
     //Ao3
-    $('<li><a class="show-bookshelves-popup">Bookshelves</a></li>').appendTo('#header > ul');
+    $('<li class="dropdown"><a class="show-bookshelves-popup">Bookshelves</a></li>').appendTo('#header > ul');
 
     $('.show-bookshelves-popup').click(function () {
         $('#bookshelf_display').modal().css('display', 'block').addClass('in');
@@ -1424,9 +1442,13 @@ function parseFFnStoryData(data, storyid) {
     that.storyLink = 'https://www.fanfiction.net/s/' + storyid;
     that.storyImageLink = d.find('.cimage').eq(1).attr('src');
     that.description = d.find('#profile_top > div').html();
-    that.authorElement = d.find('#profile_top > a')[0].outerHTML;
     that.published = easydate(d.find('#profile_top .xgray span').last().data('xutime'));
     that.updated = easydate(d.find('#profile_top .xgray span').first().data('xutime'));
+
+    //author
+    let author = d.find('#profile_top > a')[0];
+    author.href = 'https://www.fanfiction.net' + author.pathname;
+    that.authorElement = author.outerHTML;
 
     //fandom(s)
     if (d.find('.lc-left').has('img').length) {
@@ -1496,17 +1518,24 @@ function parseAo3StoryData(d, storyid) {
     that.rating = d.find('.rating .tag').html()[0];
     that.storyLink = 'https://archiveofourown.org/works/' + storyid.slice(1);
     that.description = d.find('.summary blockquote').html();
-    that.authorElement = d.find('.preface > h3 > a').removeClass('author').addClass('xcontrast_txt')[0].outerHTML;
     that.published = d.find('dd.published').html();
     that.updated = d.find('dd.status').html();
     that.wordcount = d.find('dd.words').html();
+    //author
+    let author = d.find('.preface > h3 > a').removeClass('author').addClass('xcontrast_txt')[0];
+    author.href = 'https://archiveofourown.org' + author.pathname;
+    that.authorElement = author.outerHTML;
     //kudos
     that.favs = d.find('dd.kudos').html();
     //comments
     that.reviews = d.find('dd.comments').html();
     //Ao3 chapters have a unique id in the url, instead of the direct indexing of FFnet
     that.chapterLookup = {};
-    $('#selected_id option').each((i,v) => that.chapterLookup[i + 1] = v.val);
+    that.chapterNames = {};
+    $('#selected_id option').each((i,v) => {
+        that.chapterLookup[i + 1] = v.value;
+        that.chapterNames[i + 1] = v.text;
+    });
     that.chapters = Object.keys(that.chapterLookup).length || 1;
 
     //fandom(s)
@@ -1563,7 +1592,7 @@ function createStoryCard(d, index, byComplete = true) {
 
     //no image
     if (d.storyImageLink && pageType !== 'popup') {
-        storyCard.find('.story-card-content').prepend('<img src="https:' + d.storyImageLink + '" class="story_image">');
+        storyCard.find('.story-card-content').prepend('<img src="https:' + d.storyImageLink + '" class="story_image"  onerror="this.style.display=\'none\'">');
     }
 
     //rating
@@ -2378,10 +2407,22 @@ function easydate(unix) {
 }
 
 function fandomsMatch(a, b) {
-    return a[0] === b[0] ||
-            (a.length > 1 && a[1] === b[0]) ||
-            (b.length > 1 && a[0] === b[1]) ||
-            (b.length > 1 && a.length > 1 && a[1] === b[1]);
+    for(const fa of a) {
+        for(const fb of b) {
+            if(fandomEqual(fa, fb)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+let fandomMap = {
+    'Harry Potter': 'Harry Potter - J. K. Rowling',
+}
+
+function fandomEqual(a, b){
+    return a === b || fandomMap[a] === b || fandomMap[b] === a;
 }
 
 function htmlEntities(str) {

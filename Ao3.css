@@ -199,6 +199,7 @@ select {
 .modal-backdrop.in {
   opacity: 1;
   background-color: rgba(0,0,0,0.8);
+  overflow-y: scroll;
 }
 .modal-header {
   padding: 15px;
@@ -238,4 +239,48 @@ select {
   width: 50px;
   height: 50px;
   overflow: scroll;
+}
+
+.bookshelves > ul.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: auto;
+    z-index: 1000;
+    display: none;
+    float: left;
+    min-width: 160px;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    list-style: none;
+    background-color: #fff;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    background-clip: padding-box;
+    width: fit-content;
+}
+
+ul.bookshelves.open > ul.dropdown-menu {
+    display: block;
+}
+
+/* Cross-site requests to ffnet's cdn don't work, so just hide the broken images
+ */
+.story-card img.story_image {
+    display: none;
+}
+
+/*
+
+*/
+li.bookshelf {
+    margin-bottom: 13px;
+    margin-top: -60px;
+}
+ul.bookshelves.dropdown {
+    height: 0;
+}
+
+li.shelf {
+    margin: auto;
 }
