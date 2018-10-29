@@ -60,7 +60,7 @@ function run() {
     });
 
     $('body').click(e => {
-        if (e.target.nodeName === 'A' && !e.ctrlKey && !e.target.hash) {
+        if (e.target.nodeName === 'A' && !e.ctrlKey && !e.metaKey && !e.target.hash) {
             let url = e.target.href;
             const urlType = findPageType(url);
             let transition = pageType + '-' + urlType;
@@ -69,9 +69,6 @@ function run() {
             if (transitions.includes(transition)) {
                 e.preventDefault();
                 route(url);
-            } else if (urlType === 'Ao3story') {
-                e.preventDefault();
-                window.open(url, '_blank');
             }
         }
     });
@@ -92,10 +89,10 @@ function run() {
         .appendTo('body');
     
     if (pageType === 'Ao3story') {
-        $('#main > .wrapper').append(bookshelfBar)
+        $('#main .landmark.heading+div.wrapper').append(bookshelfBar)
         let storyid = 'a' + path.match(/\d+/)[0];
         let storyData = parseAo3StoryData($('html'), storyid)
-        setUpBookshelfBar('#main > .wrapper', storyData);
+        setUpBookshelfBar('#main .landmark.heading+div.wrapper', storyData);
     }
 }
 
@@ -116,7 +113,7 @@ function createStoryHeader(d) {
                     '<li class="info-list-words">Words <b>' + d.wordcount + '</b></li>' +
                     '<li class="info-list-status">Status <b>' + (d.complete ? 'Complete' : 'In Progress') + '</b></li>' +
                  '</ol>' +
-                 '<h1 id="author-title"><b>' + d.title + '</b><span class="author">- ' + d.authorElement + '</span></h1>' +
+                 '<h1 id="author-title"><b>' + d.title + '</b><span class="author">- ' + (d.authorElement || 'Anonymous') + '</span></h1>' +
                  '<div>' +
                     '<hr>' +
                     '<p class="summary">' + d.description + '</p>' +
@@ -399,6 +396,29 @@ function userPage() {
                                                                             '<div class="panel-body"></div>' +
                                                                         '</div>' +
                                                                    '</div></div></div>');
+        $('<button class="fandom-toggle" data-toggle="hide">Hide All</button>')
+        .appendTo(`#${val.id} .panel.fandoms-list .panel-heading`)
+        .click(function (event) {
+            let text, checked;
+            if(this.dataset.toggle === 'hide') {
+                $(val.class).addClass('zhide');
+                text = 'Show All';
+                checked = false;
+                this.dataset.toggle = 'show';
+            }
+            else {
+                $(val.class).removeClass('zhide');
+                text = 'Hide All';
+                checked = true;
+                this.dataset.toggle = 'hide';
+            }
+            $(`#${val.id} .fandom-toggle`)[0].innerText = text;
+            $(`#${val.id} .fandoms-list label input`).each((i,el) => {
+                el.checked = checked;
+            });
+            $('#l_' + val.id + ' .badge').html($(val.class + ':visible').length);
+        });
+
         fandomsInList('#' + val.id).forEach(function (v, i) {
             $('<label class="control" data-fandom="' + v.k + '">' +
                 '<input type="checkbox" checked>' +
@@ -1203,7 +1223,7 @@ function findPageType(url) {
 function populateStoryLanding(d) {
     var m = $('#story_landing'),
         chapterTitle,
-        el = $('<div class="story_container" data-id=' + d.storyid + '> <div class="story_content_box" > <div class="no_padding"> <div class="title"> <span class="content_rating"></span> <div> <a class="story_name" href=""></a> <div class="author"> <span class="by">by</span> <a href=""></a> </div> </div> </div> <div class="story"> <div class="story_data"> <div class="right" style="margin-left:0px;"> <div class="padding"> <div class="description"><img src="" class="story_image"><hr> </div> <div class="chapter_list"> <ul class="chapters"> <li class="bottom"> <span class="status"></span> <div class="word_count"> <b></b> words total </div> </li> </ul> </div> </div> </div> </div> <div class="extra_story_data"> <div class="inner_data"> <span class="date_approved"> <div> <span class="published">Published</span> <br> <span></span> </div> </span> <span class="last_modified"> <div> <span class="published">Updated</span> <br> <span></span> </div> </span> </div> </div> </div> </div> </div></div>'),
+        el = $('<div class="story_container" data-id=' + d.storyid + '> <div class="story_content_box" > <div class="no_padding"> <div class="title"> <span class="content_rating"></span> <div> <a class="story_name" href=""></a> <div class="author"> <span class="by">by</span> <a href=""></a> </div> </div> </div> <div class="story"> <div class="story_data"> <div class="right" style="margin-left:0px;"> <div class="padding"> <div class="description"><img src="" class="story_image" onerror="this.style.display=\'none\'"><hr> </div> <div class="chapter_list"> <ul class="chapters"> <li class="bottom"> <span class="status"></span> <div class="word_count"> <b></b> words total </div> </li> </ul> </div> </div> </div> </div> <div class="extra_story_data"> <div class="inner_data"> <span class="date_approved"> <div> <span class="published">Published</span> <br> <span></span> </div> </span> <span class="last_modified"> <div> <span class="published">Updated</span> <br> <span></span> </div> </span> </div> </div> </div> </div> </div></div>'),
         chapterList;
 
     if (d.Ao3) {
@@ -1215,7 +1235,7 @@ function populateStoryLanding(d) {
     el.find('.story_name').html(d.title).attr({
         href: d.storyLink,
     });
-    el.find('.author').append(d.authorElement);
+    el.find('.author').append(d.authorElement || 'Anonymous');
     el.find('img.story_image').attr('src', d.storyImageLink);
     el.find('.description').append('<p>' + d.description + '</p>');
     el.find('.content_rating').html(d.rating);
@@ -1523,8 +1543,10 @@ function parseAo3StoryData(d, storyid) {
     that.wordcount = d.find('dd.words').html();
     //author
     let author = d.find('.preface > h3 > a').removeClass('author').addClass('xcontrast_txt')[0];
-    author.href = 'https://archiveofourown.org' + author.pathname;
-    that.authorElement = author.outerHTML;
+    if(author) {
+        author.href = 'https://archiveofourown.org' + author.pathname;
+        that.authorElement = author.outerHTML;
+    }
     //kudos
     that.favs = d.find('dd.kudos').html();
     //comments
@@ -1585,14 +1607,14 @@ function createStoryCard(d, index, byComplete = true) {
                         '<span class="story_link" data-original="' + d.storyid + '">' + d.title + '</span>' +
                         '</h2><div class="story-card-content">' +
                         '<span class="short_description">' + d.description +
-                        '<span class="by">&nbsp;<b>&#183;</b>&nbsp;' + d.authorElement +
+                        '<span class="by">&nbsp;<b>&#183;</b>&nbsp;' + (d.authorElement || 'Anonymous') +
                         '</span></span></div><span class="info"></span></div></div></li>');
 
     storyCard.find('.story_link').click(openStoryLanding);
 
     //no image
     if (d.storyImageLink && pageType !== 'popup') {
-        storyCard.find('.story-card-content').prepend('<img src="https:' + d.storyImageLink + '" class="story_image"  onerror="this.style.display=\'none\'">');
+        storyCard.find('.story-card-content').prepend('<img src="https:' + d.storyImageLink + '" class="story_image" onerror="this.style.display=\'none\'">');
     }
 
     //rating

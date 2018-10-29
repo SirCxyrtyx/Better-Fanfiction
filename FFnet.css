@@ -1039,6 +1039,12 @@ span.control-label {
   left: 0;
 }
 
+.panel.fandoms-list button {
+  float: right;
+  -webkit-appearance: unset;
+  background-color: rgb(81, 159, 255);
+}
+
 
 /*
  * Modified from Bootstrap

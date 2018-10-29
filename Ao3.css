@@ -284,3 +284,7 @@ ul.bookshelves.dropdown {
 li.shelf {
     margin: auto;
 }
+
+#story_landing .bookshelves {
+    margin-top: 30px;
+}
