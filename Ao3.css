@@ -288,3 +288,21 @@ li.shelf {
 #story_landing .bookshelves {
     margin-top: 30px;
 }
+
+.title.heading {
+    cursor: pointer;
+}
+
+.bookshelves input[type="text"] {
+    width: auto;
+    border-bottom-left-radius: 6px;
+    height: 25px;
+    margin-left: -1px;
+}
+
+.bookshelves .btn {
+    font-size: 90%;
+    margin-top: -3px;
+    border-radius: 0 0 5px 0;
+    margin-right: -1px;
+}

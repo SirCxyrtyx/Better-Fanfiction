@@ -228,7 +228,7 @@ hr {
   text-align: justify;
 }
 
-.tags {
+#profile_top .tags {
   margin: -3px;
   margin-top: 50px;
   position: relative;

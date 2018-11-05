@@ -90,9 +90,12 @@ function run() {
     
     if (pageType === 'Ao3story') {
         $('#main .landmark.heading+div.wrapper').append(bookshelfBar)
-        let storyid = 'a' + path.match(/\d+/)[0];
+        storyid = 'a' + path.match(/\d+/)[0];
+        chapter = ($('#chapter_index select').length && $('#chapter_index select').get(0).selectedIndex) + 1;
+        setVisited(true);
         let storyData = parseAo3StoryData($('html'), storyid)
         setUpBookshelfBar('#main .landmark.heading+div.wrapper', storyData);
+        $('.title.heading').attr('data-original', storyid).click(openStoryLanding)
     }
 }
 
@@ -180,6 +183,9 @@ function createStoryHeader(d) {
     if (d.favs) {
         wordsEl.after('<li class="info-list-favs">Favs <b>' + d.favs + '</b></li>');
     }
+    if (!d.updated) {
+        el.find('.info-list-updated').remove();
+    }
 
     el.find('#author-title > b').attr('data-original', d.storyid).click(openStoryLanding);
 
@@ -206,6 +212,7 @@ function storyPage() {
     storytextid = parseInt($('form[name="myselect"] script').html().match(/storytextid=(\d+)/)[1], 10);
 
     //add review-loading button
+    const reviewsPerPage = 50;
     $('<button id="show_reviews" class="btn">Reviews</button>').appendTo('#content_wrapper_inner').click(function () {
         if ($('#reviews').length === 0) {
             $.get('https://www.fanfiction.net/r/' + storyid + '/' + chapter, (d) => {
@@ -219,18 +226,18 @@ function storyPage() {
                 $(window).trigger('resize');
 
                 //set up navigation
-                for (let i = Math.ceil(reviews.length / 50); i > 0; i--) {
+                for (let i = Math.ceil(reviews.length / reviewsPerPage); i > 0; i--) {
                     $('<li><button class="btn" data-page =' + i + '>' + i + '</button></li>').prependTo('.review_page_list');
                 }
                 $('.review_page_list button[data-page="1"]').addClass('selected');
-                if (reviews.length < 50) {
+                if (reviews.length < reviewsPerPage) {
                     $('.review_page_list').hide();
                 }
 
                 $('.review_page_list').click(function (e) {
                     page = parseInt(e.target.dataset.page, 10);
-                    let startIndex = (page - 1) * 50,
-                        endIndex = reviews.length < (startIndex + 50) ? reviews.length : startIndex + 50;
+                    let startIndex = (page - 1) * reviewsPerPage,
+                        endIndex = reviews.length < (startIndex + reviewsPerPage) ? reviews.length : startIndex + reviewsPerPage;
                     $('html, body').animate({
                         scrollTop: $('.review_controls:first-child').offset().top,
                     });
@@ -729,7 +736,10 @@ function setUpBookshelfBar(container, storyData) {
             $(this).toggleClass('unselected');
         };
 
-    if (!storyData.Ao3) {
+    if (storyData.Ao3) {
+        $(' li.bookshelf[title="Following"]', container).remove();
+        $('li.bookshelf[title="Favorites"]', container).remove();
+    } else {
         ffAPI.getFollowingList(function (list) {
             $.each(list, function (i,v) {
                 if (v === storyId) {
@@ -805,6 +815,14 @@ function setUpBookshelfBar(container, storyData) {
             }
             $(this).siblings('input').val('');
         });
+
+        //some sort of document-level click handler registered by Ao3's js causes the dropdown
+        //to close if the click event is allowed to propagate
+        if (storyData.Ao3) {
+            $('.bookshelves .dropdown-menu', container).click(function (e) {
+                e.stopPropagation();
+            });
+        }
     }
 
     $('.bookshelf', container).click(function (e) {
@@ -850,7 +868,6 @@ function setUpBookshelfBar(container, storyData) {
     });
 
     function updateShelf(title, add) {
-
         if (add) {
             $('.bookshelves [title="' + title + '"]', container).removeClass('unselected').addClass('selected');
         } else {
@@ -1153,7 +1170,7 @@ function convertStoryLinks() {
 
 function openStoryLanding(e) {
     let storyId = $(e.currentTarget).attr('data-original');
-    if (e.ctrlKey) {
+    if (e.ctrlKey || e.metaKey) {
         window.open(getStoryLink(storyId), '_blank');
     } else {
         let loadedStorys = $('#story_landing .story_container').hide();
@@ -1216,6 +1233,8 @@ function findPageType(url) {
         return 'group';
     } else if (url.search(/\/works\//) !== -1) {
         return 'Ao3story';
+    } else if (url.search(/archiveofourown\.org/) !== -1){
+        return 'Ao3browse';
     }
     return 'browse';
 }
@@ -1241,7 +1260,11 @@ function populateStoryLanding(d) {
     el.find('.content_rating').html(d.rating);
     el.find('.word_count b').html(d.wordcount);
     el.find('.date_approved > div').children().last().html(d.published);
-    el.find('.last_modified > div').children().last().html(d.updated);
+    if (d.updated){
+        el.find('.last_modified > div').children().last().html(d.updated);
+    } else {
+        el.find('.last_modified').remove();
+    }
 
     //rating
     switch (d.rating) {
@@ -1365,7 +1388,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete = true) {
     //if there are already stories on the bookshelf
     if (wrapper.children().length) {
         //get existing list of storyids
-        existing = Array.from(wrapper.children(), el => parseInt(el.dataset.story, 10));
+        existing = Array.from(wrapper.children(), el => el.dataset.story);
         //remove from bookshelf any stories not on new list
         existing.forEach(function (val) {
             if (!storyIds.includes(val)) {
@@ -1408,10 +1431,10 @@ function populateBookshelf(storyIds, bookshelf, byComplete = true) {
 }
 
 function populateBookshelfAlt(stories, bookshelf) {
-    var wrapper = $('.story-card-list', bookshelf),
-        part = stories.splice(0, 50),
-        count = part.length,
-        loadBtn;
+    const storyCardsPerPage = 20;
+    let wrapper = $('.story-card-list', bookshelf),
+        part = stories.splice(0, storyCardsPerPage),
+        count = part.length;
     part.forEach(function (val, i) {
         $.get(getStoryLink(val.k), function (data) {
             try {
@@ -1429,12 +1452,12 @@ function populateBookshelfAlt(stories, bookshelf) {
         });
     });
     if (stories.length) {
-        loadBtn = $('<li data-order="100000" style="order: 100000;" class="load-more"><div class="story-card"><span class="info"></span></div></li>');
+        let loadBtn = $('<li data-order="100000" style="order: 100000;" class="load-more"><div class="story-card"><span class="info"></span></div></li>');
         loadBtn.children('.story-card').click(function () {
             populateBookshelfAlt(stories, bookshelf);
             loadBtn.remove();
 
-        }).children('span').html('Load ' + (stories.length > 50 ? (50 + ' more') : ('all ' + stories.length + ' remaining')) + ' stories');
+        }).children('span').html('Load ' + (stories.length > storyCardsPerPage ? (storyCardsPerPage + ' more') : ('all ' + stories.length + ' remaining')) + ' stories');
         wrapper.append(loadBtn);
     }
 }
@@ -1464,6 +1487,9 @@ function parseFFnStoryData(data, storyid) {
     that.description = d.find('#profile_top > div').html();
     that.published = easydate(d.find('#profile_top .xgray span').last().data('xutime'));
     that.updated = easydate(d.find('#profile_top .xgray span').first().data('xutime'));
+    if (that.updated == that.published) {
+        that.updated = undefined;
+    }
 
     //author
     let author = d.find('#profile_top > a')[0];
@@ -1554,7 +1580,7 @@ function parseAo3StoryData(d, storyid) {
     //Ao3 chapters have a unique id in the url, instead of the direct indexing of FFnet
     that.chapterLookup = {};
     that.chapterNames = {};
-    $('#selected_id option').each((i,v) => {
+    d.find('#selected_id option').each((i,v) => {
         that.chapterLookup[i + 1] = v.value;
         that.chapterNames[i + 1] = v.text;
     });
@@ -2079,7 +2105,7 @@ function FanFictionAPI() {
         chrome.storage.local.get(null, function (items) {
             for (let prop in items) {
                 if (prop.startsWith('Read:')) {
-                    readStories.push({k: parseInt(prop.substr(5), 10), v: items[prop].lastRead});
+                    readStories.push({k: prop.substr(5), v: items[prop].lastRead});
                 }
             }
             readStories.sort(function (a, b) {

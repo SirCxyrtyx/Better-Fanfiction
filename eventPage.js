@@ -46,7 +46,7 @@ function setUpDBListeners(uid) {
         let msgObj = {};
         if (key.startsWith('Read:')) {
             msgObj.updated = 'Read';
-            msgObj.id = parseInt(key.substr(5), 10);
+            msgObj.id = key.substr(5);
         } else if (key.startsWith('shelf:')) {
             msgObj.updated = 'Shelf';
             msgObj.id = parseInt(key.substr(6), 10);
@@ -65,7 +65,7 @@ function onDBUpdate(snap) {
             let msgObj = {};
             if (key.startsWith('Read:')) {
                 msgObj.updated = 'Read';
-                msgObj.id = parseInt(key.substr(5), 10);
+                msgObj.id = key.substr(5);
             } else if (key.startsWith('shelf:')) {
                 msgObj.updated = 'Shelf';
                 msgObj.id = parseInt(key.substr(6), 10);
