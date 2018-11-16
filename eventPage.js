@@ -88,7 +88,7 @@ function onDBUpdate(snap) {
                             msgObj.added = true;
                         }
                         msgObj.updated = 'Bookshelves';
-                        msgObj.fandoms = shelf.fandoms;
+                        msgObj.fandom = shelf.fandom;
                         msgObj.id = shelf.id;
                         msgObj.name = shelf.name;
                         //break

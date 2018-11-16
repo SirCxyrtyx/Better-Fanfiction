@@ -1006,13 +1006,13 @@ function setUpBookshelves() {
         $('#bookshelf_tabs a[href="#alsoliked_tab"]').click(function (e) {
             e.preventDefault();
             if (!$('#alsoliked_tab').hasClass('populated')) {
-                $('#alsoliked_tab').addClass('populated')
-                    .append('<img width="64" height="64" title="" alt="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
                 if (pageType.startsWith('Ao3')) {
                     getAo3UsersBookmarks(Array.from($('p.kudos a[href^="/users"]'), e => e.href), function (alObj) {
                         populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
                     });
                 } else {
+                    $('#alsoliked_tab').addClass('populated')
+                        .append('<img width="64" height="64" title="" alt="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
                     ffAPI.getAlsoLiked(function (alObj) {
                         populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
                     });
@@ -1881,29 +1881,17 @@ function FanFictionAPI() {
                 if (tmp) {
                     list = list.concat(tmp);
                 }
-
+                progressBar.advance();
                 if (data.search('Next &#187;') !== -1) {
                     getReviewers(storyid, callback, index + 1, list);
                 } else {
-                    list = list.sort().filter(function (item, pos, ary) {
-                        return !pos || item !== ary[pos - 1];
-                    });
-                    progressBar = progressDialog({tasks: list.length, parent: $('#alsoliked_tab')});
-                    progressBar.message('Fetching the favorites of ' + list.length + ' users.');
                     getUserFavs(list, callback);
-                    $('#alsoliked_tab > img').remove();
                 }
             },
         'html').fail(function () {
             alert('getReviewers terminated early, on page ' + index);
             console.log('getReviewers terminated early, on page ' + index);
-            list = list.sort().filter(function (item, pos, ary) {
-                return !pos || item !== ary[pos - 1];
-            });
-            progressBar = progressDialog({tasks: list.length, parent: $('#alsoliked_tab')});
-            progressBar.message('Fetching the favorites of ' + list.length + ' users.');
             getUserFavs(list, callback);
-            $('#alsoliked_tab > img').remove();
         });
     }
 
@@ -1919,89 +1907,69 @@ function FanFictionAPI() {
                 if (tmp) {
                     list = list.concat(tmp);
                 }
-
+                progressBar.advance();
                 if (index < chapters) {
                     getReviewersByChapter(storyid, chapters, callback, index + 1, list);
                 } else {
-                    list = list.sort().filter(function (item, pos, ary) {
-                        return !pos || item !== ary[pos - 1];
-                    });
-                    progressBar = progressDialog({tasks: list.length, parent: $('#alsoliked_tab')});
-                    progressBar.message('Fetching the favorites of ' + list.length + ' users.');
                     getUserFavs(list, callback);
-                    $('#alsoliked_tab > img').remove();
                 }
             },
         'html').fail(function () {
             alert('getReviewersByChapter terminated early, on page ' + index + ' of ' + chapters);
             console.log('getReviewersByChapter terminated early, on page ' + index + ' of ' + chapters);
-            list = list.sort().filter(function (item, pos, ary) {
-                return !pos || item !== ary[pos - 1];
-            });
-            progressBar = progressDialog({tasks: list.length, parent: $('#alsoliked_tab')});
-            progressBar.message('Fetching the favorites of ' + list.length + ' users.');
             getUserFavs(list, callback);
-            $('#alsoliked_tab > img').remove();
         });
     }
 
-    function getUserFavs(users, callback, index = 0, list = []) {
-        if (cancel) {
-            cancel = false;
-            progressBar.close();
-            return;
+    function getUserFavs(users, callback) {
+        users = users.sort().filter(function (item, pos, ary) {
+            return !pos || item !== ary[pos - 1];
+        });
+        if (progressBar) {
+            progressBar.close()
         }
-        $.get('https://www.fanfiction.net' + users[index],
-            function (data) {
-                progressBar.advance();
-                $('.favstories', data).each(function () {
-                    list.push(parseInt(this.dataset.storyid));
-                });
-                if (index + 1 < users.length) {
-                    getUserFavs(users, callback, index + 1, list);
-                } else {
-                    progressBar.close();
-                    let also = {};
-                    list.forEach(function (item) {
-                        if (!also[item]) {
-                            also[item] = 1;
-                        } else {
-                            also[item] += 1;
-                        }
+        progressBar = progressDialog({tasks: users.length, parent: $('#alsoliked_tab')});
+        progressBar.message('Fetching the favorites of ' + users.length + ' users.');
 
-                    });
-                    list = Object.keys(also).map(prop => ({
-                        k: prop,
-                        v: also[prop],
-                    }));
-                    console.log('Found ' + list.length + ' favorited stories.');
-                    list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
-                    console.log(list.length + ' of which were faved by more than one person.');
-                    if (list.length > 50) {
-                        list = list.filter((item, pos) => pos < 49 && item.v > 2);
+        let remaining = users.length;
+        let list = [];
+        users.forEach(user => {
+            $.get('https://www.fanfiction.net' + user,
+                function (data) {
+                    progressBar.advance();
+                    console.log(`loaded ${user}`);
+                    try {
+                        $('.favstories', data).each(function () {
+                            list.push(parseInt(this.dataset.storyid));
+                        });
+                    } finally {
+                        remaining--;
+                        if (remaining <= 0) {
+                            finish();
+                        }
                     }
-                    if (list.length === 0) {
-                        list.push({k: storyid + '', v: 1});
-                    }else if (list[0].k === storyid + '') {
-                        list.shift();
-                    }
-                    let alsoLikedCache = {created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list};
-                    chrome.storage.local.set({['AlsoLiked:' + storyid]: alsoLikedCache});
-                    callback(alsoLikedCache);
+                },
+            'html').fail(function () {
+                progressBar.advance()
+                console.error(`failed to load ${user}`);
+                remaining--;
+                if (remaining <= 0) {
+                    finish();
                 }
-            },
-        'html').fail(function () {
-            var also = {};
-            alert('getUserFavs terminated early, on user ' + index + ' of ' + users.length);
-            console.log('getUserFavs terminated early, on user ' + index + ' of ' + users.length);
+            });
+        });
+        
+        function finish() {
             progressBar.close();
+            progressBar = null;
+            let also = {};
             list.forEach(function (item) {
                 if (!also[item]) {
                     also[item] = 1;
-                } else {
+                }
+                else {
                     also[item] += 1;
                 }
-
             });
             list = Object.keys(also).map(prop => ({
                 k: prop,
@@ -2014,12 +1982,15 @@ function FanFictionAPI() {
                 list = list.filter((item, pos) => pos < 49 && item.v > 2);
             }
             if (list.length === 0) {
-                list.push({k: storyid + '', v: 1});
-            }else if (list.length > 1 && list[0].k === storyid + '') {
+                list.push({ k: storyid + '', v: 1 });
+            }
+            else if (list[0].k === storyid + '') {
                 list.shift();
             }
-            callback({created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list});
-        });
+            let alsoLikedCache = { created: Date.now(), chapters: $('.info-list-chapters > b').html(), stories: list };
+            chrome.storage.local.set({ ['AlsoLiked:' + storyid]: alsoLikedCache });
+            callback(alsoLikedCache);
+        }
     }
 
     this.cancelOperation = function () {
@@ -2078,8 +2049,7 @@ function FanFictionAPI() {
     };
 
     this.getAlsoLiked = function (callback) {
-        var chapters,
-            id = 'AlsoLiked:' + storyid;
+        const id = 'AlsoLiked:' + storyid;
 
         if (!loggedIn) {
             $.toast('Please login or signup to access this feature.');
@@ -2087,14 +2057,20 @@ function FanFictionAPI() {
         }
         cancel = false;
         chrome.storage.local.get(id, function (items) {
+            $('#alsoliked_tab > img').remove();
             if (items[id]) {
                 callback(items[id]);
                 return;
             }
-            chapters = parseInt($('.info-list-chapters > b').html(), 10);
-            if (chapters < parseInt($('.info-list-reviews > a').html().replace(',', ''), 10) / 15) {
+            const chapters = parseInt($('.info-list-chapters > b').html(), 10);
+            const numReviews = parseInt($('.info-list-reviews > a').html().replace(',', ''), 10);
+            if (chapters < numReviews / 15) {
+                progressBar = progressDialog({tasks: chapters, parent: $('#alsoliked_tab')});
+                progressBar.message('Fetching list of all users who have reviewed this story.');
                 getReviewersByChapter(storyid, chapters, callback);
             } else {
+                progressBar = progressDialog({tasks: numReviews / 15, parent: $('#alsoliked_tab')});
+                progressBar.message('Fetching list of all users who have reviewed this story.');
                 getReviewers(storyid, callback);
             }
         });
@@ -2479,12 +2455,15 @@ function htmlEntities(str) {
 
 function getAo3UsersBookmarks(users, callback) {
     var list = [],
-        count = users.length;
+        count = users.length,
+        progressBar = progressDialog({tasks: count, parent: $('#alsoliked_tab')});
+        progressBar.message(`Fetching the Harry Potter bookmarks of ${count} users`);
     users.forEach(function (val, i) {
         //Hardcoded Harry Potter Fandom id: 136512
         getAo3BookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + '136512' + '&page=', function (l) {
             list.push(...l);
             count--;
+            progressBar.advance();
             if (count <= 0) {
                 let also = {};
                 list.forEach(function (item) {
@@ -2505,8 +2484,8 @@ function getAo3UsersBookmarks(users, callback) {
                 if (list.length > 50) {
                     list = list.filter((item, pos) => pos < 49 && item.v > 2);
                 }
+                progressBar.close();
                 callback({created: Date.now(), stories: list});
-                $('#alsoliked_tab > img').remove();
             }
         });
     });

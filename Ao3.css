@@ -306,3 +306,7 @@ li.shelf {
     border-radius: 0 0 5px 0;
     margin-right: -1px;
 }
+
+#bookshelf_display a, #story_landing a {
+    border-bottom: unset;
+}
