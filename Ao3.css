@@ -134,7 +134,7 @@ select {
 .modal-open {
   overflow: hidden;
 }
-.modal {
+html > .modal, .modal-backdrop > .modal {
   position: fixed;
   top: 0;
   right: 0;
@@ -264,12 +264,6 @@ ul.bookshelves.open > ul.dropdown-menu {
     display: block;
 }
 
-/* Cross-site requests to ffnet's cdn don't work, so just hide the broken images
- */
-.story-card img.story_image {
-    display: none;
-}
-
 /*
 
 */
@@ -309,4 +303,12 @@ li.shelf {
 
 #bookshelf_display a, #story_landing a {
     border-bottom: unset;
+}
+
+dl.meta.group {
+    padding-bottom: 35px;
+}
+
+li.subscribe {
+    display: none;
 }

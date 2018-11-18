@@ -77,6 +77,8 @@ function onDBUpdate(snap) {
                 msgObj.updated = 'Favorites';
             } else if (key === 'AlertsLastModified') {
                 msgObj.updated = 'Alerts';
+            } else if (key === 'SubscriptionsLastModified') {
+                msgObj.updated = 'Subscriptions'
             } else if (key === 'Bookshelves') {
                 let oldData = x[key] || {},
                     newData = snap.val();
@@ -106,7 +108,10 @@ function onDBUpdate(snap) {
 function tabUpdate(data) {
     if (data !== undefined) {
         chrome.tabs.query({ url: ['https://www.fanfiction.net/*', 'https://archiveofourown.org/*'] }, function (tabs) {
-            tabs.forEach(t => chrome.tabs.sendMessage(t.id, data));
+            tabs.forEach(t => {
+                console.log("Sending message to tab: ", t, data);
+                chrome.tabs.sendMessage(t.id, data)
+            });
         });
     }
 }

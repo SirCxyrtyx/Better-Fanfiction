@@ -27,16 +27,21 @@ jQuery.fn.fixed_center = function() {
         b('body').append(e);
         e.fixed_center();
         e.fadeIn(300);
+        const removeToast = function () {
+            e.remove();
+            window.toasting = false;
+            if (window.toastQue.length > 0) {
+                var next = window.toastQue.pop();
+                b.toast(next.message, next.displayTime);
+            }
+        };
         a = setTimeout(function() {
-            e.fadeOut(200, function() {
-                e.remove();
-                window.toasting = false;
-                if (window.toastQue.length > 0) {
-                    var next = window.toastQue.pop();
-                    b.toast(next.message, next.displayTime);
-                }
-            });
+            e.fadeOut(200, removeToast);
         }, f.displayTime);
+        e.click(() => {
+            removeToast();
+            clearTimeout(a);
+        })
     };
 })(jQuery);
 

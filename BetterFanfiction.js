@@ -3,6 +3,7 @@
 
 'use strict';
 const ffAPI = new FanFictionAPI(),
+    ao3API = new ArchiveOfOurOwnAPI(),
     transitions = ['story-story'],//, 'story-user', 'user-user'],//, 'user-story'],
     reviewControls = '<div class="review_controls"><ul class="review_page_list"></ul><ul class="review_page_info"><li><span></span></li><li><button class="btn">Newest First</button></li></ul></div>',
     bookshelfBar = '<ul class="bookshelves dropdown">' +
@@ -25,7 +26,7 @@ if (pageType === 'story') {
 }
 
 //Fanfiction.net sign-in check
-if (document.cookie.search('funn=') === -1 && path !== '/login.php' && !pageType.startsWith('Ao3')) {
+if (document.cookie.search('funn=') === -1 && path !== '/login.php' && !isAo3Page()) {
     document.addEventListener('DOMContentLoaded', function () {
         $.toast('You\'re not logged in.', 2500);
     });
@@ -44,6 +45,10 @@ if (document.cookie.search('funn=') === -1 && path !== '/login.php' && !pageType
 function run() {
     if (pageType === 'story') {
         storyPage();
+    } else if (isAo3Page()) {
+        if($('#greeting .icon a').length){
+            ao3API.userName = $('#greeting .icon a')[0].href.slice(34);
+        }
     } else {
         convertStoryLinks();
         //$('body > div.zmenu').affix({offset: {top: 30}});
@@ -737,8 +742,15 @@ function setUpBookshelfBar(container, storyData) {
         };
 
     if (storyData.Ao3) {
-        $(' li.bookshelf[title="Following"]', container).remove();
         $('li.bookshelf[title="Favorites"]', container).remove();
+        ao3API.getSubscriptions(list => {
+            list.forEach(v => {
+                if (v === storyId) {
+                    $(' li.bookshelf[title="Following"]', container).removeClass('unselected').addClass('selected');
+                    return false;
+                }
+            });
+        });
     } else {
         ffAPI.getFollowingList(function (list) {
             $.each(list, function (i,v) {
@@ -829,19 +841,34 @@ function setUpBookshelfBar(container, storyData) {
         switch ($(this).attr('title')) {
             case 'Favorites':
                 if (!storyData.Ao3) {
-                    if ($(this).hasClass('selected')) {
-                        ffAPI.unfav(storyId, toggle.bind(this));
+                    if (!isAo3Page()) {
+                        if ($(this).hasClass('selected')) {
+                            ffAPI.unfav(storyId, toggle.bind(this));
+                        } else {
+                            ffAPI.fav(storyId, toggle.bind(this));
+                        }
                     } else {
-                        ffAPI.fav(storyId, toggle.bind(this));
+                        $.toast("Please go to Fanfiction.net to change this story's Favorite status.", 5000)
                     }
                 }
                 break;
             case 'Following':
-                if (!storyData.Ao3) {
-                    if ($(this).hasClass('selected')) {
-                        ffAPI.unfollow(storyId, toggle.bind(this));
+                if (storyData.Ao3) {
+                    if (isAo3Page()) {
+                        ao3API.toggleSubscription(storyId, toggle.bind(this));
+                    }
+                    else {
+                        $.toast("Please go to Archive of Our Own to change this story's subscription status.", 5000)
+                    }
+                } else {
+                    if (!isAo3Page()) {
+                        if ($(this).hasClass('selected')) {
+                            ffAPI.unfollow(storyId, toggle.bind(this));
+                        } else {
+                            ffAPI.follow(storyId, toggle.bind(this));
+                        }
                     } else {
-                        ffAPI.follow(storyId, toggle.bind(this));
+                        $.toast("Please go to Fanfiction.net to change this story's Alert status.", 5000)
                     }
                 }
                 break;
@@ -876,6 +903,7 @@ function setUpBookshelfBar(container, storyData) {
     }
 
     chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+        console.log("BetterFanfiction message recieved: ", request)
         switch (request.updated){
                 case 'Liked':
                     ffAPI.getLiked(function (list) {
@@ -896,6 +924,13 @@ function setUpBookshelfBar(container, storyData) {
                     ffAPI.getFollowingList(function (list) {
                         updateShelf('Following', list.indexOf(storyId) !== -1);
                     });
+                    break;
+                case 'Subscriptions':
+                    if (isAo3Page()) {
+                        ao3API.getSubscriptions(function (list) {
+                            updateShelf('Following', list.indexOf(storyId) !== -1);
+                        });
+                    }
                     break;
                 case 'Bookshelves':
                     $('.bookshelves .dropdown-menu', container).children().remove();
@@ -923,6 +958,7 @@ function setUpBookshelves() {
             '<li role="presentation"><a href="#ril_tab" role="tab" data-toggle="tab">Read It Later</a></li>' +
             '<li role="presentation"><a href="#fav_tab" role="tab">Favorites</a></li>' +
             '<li role="presentation"><a href="#track_tab" role="tab">Following</a></li>' +
+            '<li role="presentation"><a href="#sub_tab" role="tab">Subscriptions</a></li>' +
             '<li role="presentation"><a href="#liked_tab" role="tab">Liked</a></li>' +
             '<li role="presentation"><a href="#alsoliked_tab" role="tab">Also Liked</a></li>' +
             '<li role="presentation"><a href="#read_tab" role="tab">Read</a></li>' +
@@ -931,6 +967,7 @@ function setUpBookshelves() {
             '<div role="tabpanel" class="tab-pane" id="ril_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="fav_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="track_tab"><ul class="story-card-list list_boxes"></ul></div>' +
+            '<div role="tabpanel" class="tab-pane" id="sub_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="liked_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="alsoliked_tab"><ul class="story-card-list list_boxes"></ul></div>' +
             '<div role="tabpanel" class="tab-pane" id="read_tab"><ul class="story-card-list list_boxes"></ul></div>' +
@@ -1006,8 +1043,8 @@ function setUpBookshelves() {
         $('#bookshelf_tabs a[href="#alsoliked_tab"]').click(function (e) {
             e.preventDefault();
             if (!$('#alsoliked_tab').hasClass('populated')) {
-                if (pageType.startsWith('Ao3')) {
-                    getAo3UsersBookmarks(Array.from($('p.kudos a[href^="/users"]'), e => e.href), function (alObj) {
+                if (isAo3Page()) {
+                    ao3API.getUsersBookmarks(Array.from($('p.kudos a[href^="/users"]'), e => e.href), function (alObj) {
                         populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
                     });
                 } else {
@@ -1057,6 +1094,17 @@ function setUpBookshelves() {
         $(this).tab('show');
     });
 
+    $('#bookshelf_tabs a[href="#sub_tab"]').click(function (e) {
+        e.preventDefault();
+        if (!$('#sub_tab').hasClass('populated')) {
+            ao3API.getSubscriptions(function (list) {
+                populateBookshelf(list, $('#sub_tab'));
+                $('#sub_tab').addClass('populated');
+            });
+        }
+        $(this).tab('show');
+    });
+
     $('#bookshelf_tabs a[href="#liked_tab"]').click(function (e) {
         e.preventDefault();
         if (!$('#liked_tab').hasClass('populated')) {
@@ -1099,6 +1147,9 @@ function setUpBookshelves() {
                     break;
                 case 'Alerts':
                     updateShelf('#track_tab');
+                    break;
+                case 'Subscriptions':
+                    updateShelf('#sub_tab');
                     break;
                 case 'Bookshelves':
                     if (request.added) {
@@ -1237,6 +1288,10 @@ function findPageType(url) {
         return 'Ao3browse';
     }
     return 'browse';
+}
+
+function isAo3Page(type = pageType) {
+    return type.startsWith('Ao3');
 }
 
 function populateStoryLanding(d) {
@@ -1621,6 +1676,9 @@ function parseAo3StoryData(d, storyid) {
     }));
     that.chars = rels.concat(that.chars).join(', ');
 
+    //cover art (rare on Ao3)
+    that.storyImageLink = d.find('#workskin img').attr('src');
+
     that.data = d;
 
     return that;
@@ -1640,7 +1698,7 @@ function createStoryCard(d, index, byComplete = true) {
 
     //no image
     if (d.storyImageLink && pageType !== 'popup') {
-        storyCard.find('.story-card-content').prepend('<img src="https:' + d.storyImageLink + '" class="story_image" onerror="this.style.display=\'none\'">');
+        storyCard.find('.story-card-content').prepend('<img src="' + d.storyImageLink + '" class="story_image" onerror="this.style.display=\'none\'">');
     }
 
     //rating
@@ -2343,6 +2401,147 @@ function FanFictionAPI() {
     };
 }
 
+function ArchiveOfOurOwnAPI() {
+    let userName,
+        loggedIn = false,
+        subscriptionList,
+        subscriptionAccessTime;
+
+    chrome.storage.local.get('Ao3UserName', function (items) {
+        if (items.Ao3UserName) {
+            userName = items.Ao3UserName;
+        }
+    });
+
+    Object.defineProperty(this, 'userName', { set: function (x) {
+            if (x !== -1) {
+                loggedIn = true;
+                userName = x;
+                chrome.storage.local.set({ Ao3UserName: x });
+            }
+        },
+    });
+    async function Ao3GetSubscribeInfo(storyid, subscribe = true) {
+        let data = await $.get(`https://archiveofourown.org/works/${Ao3StripStoryId(storyid)}`)
+        let subForm = $(data).find('li.subscribe form');
+        if(subForm.length){
+            return {reqObj: Array.from(subForm.children()).reduce((obj, el) => {obj[el.name] = el.value; return obj}, {}),
+                    url: subForm[0].action}
+        }
+        else {
+            return {url: false}
+        }
+    }
+    
+    function getBookmarksFromUser(url, callback, index = 1, list = []) {
+        $.get(url + index,
+            function (data) {
+                list = list.concat(Array.from($(data).find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
+                if ($(data).find('.next a').length && index < 25) {
+                    getBookmarksFromUser(url, callback, index + 1, list);
+                } else {
+                    callback(list);
+                }
+            },
+        'html').fail(function () {
+            callback([]);
+        });
+    }
+
+    function readSubscriptionList(callback, index = 1, list = []) {
+        if (userName) {
+            $.get(`https://archiveofourown.org/users/${userName}/subscriptions?type=works&page=${index}`,
+                function (data) {
+                    list = list.concat(Array.from($(data).find('dl.subscription dt a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
+                    if ($(data).find('.next a').length) {
+                        readSubscriptionList(callback, index + 1, list);
+                    } else {
+                        subscriptionList = list;
+                        subscriptionAccessTime = Date.now();
+                        callback(list);
+                    }
+                },
+            'html').fail(function () {
+                subscriptionList = undefined;
+                callback(list);
+            });
+        }
+    }
+
+    this.getUsersBookmarks = function(users, callback) {
+        var list = [],
+            count = users.length,
+            progressBar = progressDialog({tasks: count, parent: $('#alsoliked_tab')});
+            progressBar.message(`Fetching the Harry Potter bookmarks of ${count} users`);
+        users.forEach(function (val, i) {
+            //Hardcoded Harry Potter Fandom id: 136512
+            getBookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + '136512' + '&page=', function (l) {
+                list.push(...l);
+                count--;
+                progressBar.advance();
+                if (count <= 0) {
+                    let also = {};
+                    list.forEach(function (item) {
+                        if (!also[item]) {
+                            also[item] = 1;
+                        } else {
+                            also[item] += 1;
+                        }
+    
+                    });
+                    list = Object.keys(also).map(prop => ({
+                        k: prop,
+                        v: also[prop],
+                    }));
+                    console.log('Found ' + list.length + ' bookmarked stories.');
+                    list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
+                    console.log(list.length + ' of which were bookmarked by more than one person.');
+                    if (list.length > 50) {
+                        list = list.filter((item, pos) => pos < 49 && item.v > 2);
+                    }
+                    progressBar.close();
+                    callback({created: Date.now(), stories: list});
+                }
+            });
+        });
+    }
+
+    this.getSubscriptions = function (callback) {
+        chrome.storage.local.get('SubscriptionsLastModified', function (items) {
+            if (subscriptionList === undefined || subscriptionAccessTime < items.SubscriptionsLastModified) {
+                readSubscriptionList(callback);
+            } else {
+                callback(subscriptionList);
+            }
+        });
+    };
+    
+    this.toggleSubscription = async function(storyid, callback) {
+        //has to get url from the form since each subscription has a subscription id that is part of the url
+        let {reqObj, url} = await Ao3GetSubscribeInfo(storyid);
+        if(!url) {
+            $.toast('Please login or signup to access this feature.');
+            return;
+        }
+        $.post(url,
+            reqObj,
+            function (data) {
+                if (data.error) {
+                    $.toast('We are unable to process your request due to a network error. Please try again later.');
+                } else {
+                    chrome.runtime.sendMessage({updated: 'SubscriptionsLastModified', val: Date.now()});
+                    if (callback) {
+                        callback();
+                    }
+                }
+            },
+            'json'
+        ).error(function () {
+            $.toast('We are unable to process your request due to a network error. Please try again later.');
+        });
+    }
+}
+
 /*
 ====================
 progressDialog
@@ -2453,55 +2652,6 @@ function htmlEntities(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function getAo3UsersBookmarks(users, callback) {
-    var list = [],
-        count = users.length,
-        progressBar = progressDialog({tasks: count, parent: $('#alsoliked_tab')});
-        progressBar.message(`Fetching the Harry Potter bookmarks of ${count} users`);
-    users.forEach(function (val, i) {
-        //Hardcoded Harry Potter Fandom id: 136512
-        getAo3BookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + '136512' + '&page=', function (l) {
-            list.push(...l);
-            count--;
-            progressBar.advance();
-            if (count <= 0) {
-                let also = {};
-                list.forEach(function (item) {
-                    if (!also[item]) {
-                        also[item] = 1;
-                    } else {
-                        also[item] += 1;
-                    }
-
-                });
-                list = Object.keys(also).map(prop => ({
-                    k: prop,
-                    v: also[prop],
-                }));
-                console.log('Found ' + list.length + ' bookmarked stories.');
-                list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
-                console.log(list.length + ' of which were bookmarked by more than one person.');
-                if (list.length > 50) {
-                    list = list.filter((item, pos) => pos < 49 && item.v > 2);
-                }
-                progressBar.close();
-                callback({created: Date.now(), stories: list});
-            }
-        });
-    });
-}
-
-function getAo3BookmarksFromUser(url, callback, index = 1, list = []) {
-    $.get(url + index,
-        function (data) {
-            list = list.concat(Array.from($(data).find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
-            if ($(data).find('.next a').length && index < 25) {
-                getAo3BookmarksFromUser(url, callback, index + 1, list);
-            } else {
-                callback(list);
-            }
-        },
-    'html').fail(function () {
-        callback([]);
-    });
+function Ao3StripStoryId(storyid){
+    return storyid.slice(1);
 }
