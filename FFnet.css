@@ -268,18 +268,17 @@ hr {
 }
 
 .tags span {
-  margin: 3px;
+  margin: 2px 3px 3px -3px;
   color: #FFF;
   display: inline-block;
   font-size: 45px;
   text-shadow: -1px -1px rgba(0, 0, 0, 0.2);
   position: absolute;
   font-family: 'Open Sans Condensed';
-  margin-left: -3px;
 }
 
 .tags span.right-bracket {
-  margin-left: -12px;
+  margin-left: -11px;
 }
 
 .info-container ol {
@@ -516,6 +515,12 @@ html > body {
   font-size: 0.9em;
 }
 
+/* sometimes Ao3 descriptions will have images in them
+ these will get put in the cover image, we don't want them here */
+.short_description img {
+  display: none;
+}
+
 .list_boxes .story-card .story_category{
   padding: 3px 6px;
   margin-right: 2px;
@@ -703,6 +708,12 @@ h4.modal-title {
 .story_container div.description {
   line-height: 1.9em;
   overflow: hidden;
+}
+
+/* sometimes Ao3 descriptions will have images in them
+ these will get put in the cover image, we don't want them here */
+.story_data .description img:not(.story_image) {
+  display: none;
 }
 
 .story_container .story_image {
@@ -907,6 +918,17 @@ progress::-webkit-progress-bar {
 progress::-webkit-progress-value {
   border-radius: 4px;
   background-color: cornflowerblue;
+}
+.progress-dialog span.cancel {
+  position: relative;
+  top: -20px;
+  left: 90px;
+  width: 300px;
+  opacity: 0;
+}
+
+.progress-dialog span.cancel:hover {
+  opacity: 1;
 }
 
 button.icon-heart {

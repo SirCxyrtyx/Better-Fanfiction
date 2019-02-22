@@ -32,6 +32,9 @@ startAuth(false);
 firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
         // User is signed in.
+        firebase.database.enableLogging(function(message) {
+            console.log("[FIREBASE]", message);
+          });
         setUpDBListeners(user.uid);
     } else {
     }
@@ -80,9 +83,9 @@ function onDBUpdate(snap) {
             } else if (key === 'SubscriptionsLastModified') {
                 msgObj.updated = 'Subscriptions'
             } else if (key === 'Bookshelves') {
-                let oldData = x[key] || {},
-                    newData = snap.val();
-                newData.forEach((shelf, i) => {
+                let oldData = x[key] || {};
+                storeObj[key] = Array.from(snap.val()).filter(el => el != null);
+                storeObj[key].forEach((shelf, i) => {
                     if (!jsonEqual(shelf, oldData[i])) {
                         if (shelf === undefined || shelf === null) {
                             shelf = oldData[i];
@@ -109,7 +112,7 @@ function tabUpdate(data) {
     if (data !== undefined) {
         chrome.tabs.query({ url: ['https://www.fanfiction.net/*', 'https://archiveofourown.org/*'] }, function (tabs) {
             tabs.forEach(t => {
-                console.log("Sending message to tab: ", t, data);
+                console.log("Sending message to tab: ", t.title, data);
                 chrome.tabs.sendMessage(t.id, data)
             });
         });

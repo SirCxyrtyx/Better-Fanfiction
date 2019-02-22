@@ -810,10 +810,11 @@ function setUpBookshelfBar(container, storyData) {
                 });
             }
         });
+        //Add Bookshelf Button
         $('.bookshelves .dropdown-menu button', container).click(function () {
             var shelfName = $(this).siblings('input').val();
             if (shelfName) {
-                ffAPI.addBookshelf(shelfName, storyData.fandom, function (shelfId) {
+                ffAPI.addBookshelf(shelfName, normalizeFandoms(storyData.fandom), function (shelfId) {
                     $('<li title="' + shelfId + '" class="shelf"><span>' + shelfName + '</span><i class="icon-ok-circled"></i></li>')
                         .insertBefore($('.bookshelves .dropdown-menu li[title="Add"]', container))
                         .click(function () {
@@ -890,7 +891,7 @@ function setUpBookshelfBar(container, storyData) {
                 e.preventDefault();
                 break;
             default:
-                toggle(this);
+                toggle.apply(this);
         }
     });
 
@@ -1044,7 +1045,10 @@ function setUpBookshelves() {
             e.preventDefault();
             if (!$('#alsoliked_tab').hasClass('populated')) {
                 if (isAo3Page()) {
-                    ao3API.getUsersBookmarks(Array.from($('p.kudos a[href^="/users"]'), e => e.href), function (alObj) {
+                    let firstFandomLinkElement = $('dd.fandom ul li:first-child a').get(0);
+                    ao3API.getUsersBookmarks(Array.from($('p.kudos a[href^="/users"]'), e => e.href), 
+                                             firstFandomLinkElement.text, firstFandomLinkElement.href,
+                                             function (alObj) {
                         populateBookshelfAlt(alObj.stories, $('#alsoliked_tab'));
                     });
                 } else {
@@ -1618,7 +1622,7 @@ function parseAo3StoryData(d, storyid) {
     that.title = d.find('.preface h2').html().trim();
     that.rating = d.find('.rating .tag').html()[0];
     that.storyLink = 'https://archiveofourown.org/works/' + storyid.slice(1);
-    that.description = d.find('.summary blockquote').html();
+    that.description = d.find('.summary blockquote').html() || '';
     that.published = d.find('dd.published').html();
     that.updated = d.find('dd.status').html();
     that.wordcount = d.find('dd.words').html();
@@ -1654,11 +1658,8 @@ function parseAo3StoryData(d, storyid) {
     });
 
     //Completion
-    if (d.find('.status').length === 0 || d.find('dt.status').html() === 'Completed:') {
-        that.complete = true;
-    } else {
-        that.complete = false;
-    }
+    that.complete = d.find('.status').length === 0 || d.find('dt.status').html() === 'Completed:';
+    
     //characters
     that.chars = [];
     d.find('.character a').each(function(index, el) {
@@ -1834,8 +1835,8 @@ function FanFictionAPI() {
         loggedIn = false,
         followingList,
         favoritedList,
-        followingAccessTime,
-        favoritedAccessTime,
+        followingAccessTime = 0,
+        favoritedAccessTime = 0,
         progressBar,
         cancel = false;
 
@@ -1872,12 +1873,14 @@ function FanFictionAPI() {
                 } else {
                     if (type === 'alert') {
                         followingList = list;
+                        chrome.storage.local.set({ followingList })
                         followingAccessTime = Date.now();
                         if (callback) {
                             callback(followingList);
                         }
                     } else {
                         favoritedList = list;
+                        chrome.storage.local.set({ favoritedList })
                         favoritedAccessTime = Date.now();
                         if (callback) {
                             callback(favoritedList);
@@ -2077,20 +2080,22 @@ function FanFictionAPI() {
     };
 
     this.getFollowingList = function (callback) {
-        chrome.storage.local.get('AlertsLastModified', function (items) {
-            if (followingList === undefined || followingAccessTime < items.AlertsLastModified) {
+        chrome.storage.local.get(['AlertsLastModified', 'followingList'], function (items) {
+            if (items.followingList === undefined || followingAccessTime < items.AlertsLastModified) {
                 readFFnetList('alert', callback);
             } else {
+                followingList = items.followingList;
                 callback(followingList);
             }
         });
     };
 
     this.getFavoritedList = function (callback) {
-        chrome.storage.local.get('FavoritesLastModified', function (items) {
-            if (favoritedList === undefined || favoritedAccessTime < items.FavoritesLastModified) {
+        chrome.storage.local.get(['FavoritesLastModified', 'favoritedList'], function (items) {
+            if (items.favoritedList === undefined || favoritedAccessTime < items.FavoritesLastModified) {
                 readFFnetList('favorites', callback);
             } else {
+                favoritedList = items.favoritedList;
                 callback(favoritedList);
             }
         });
@@ -2331,17 +2336,17 @@ function FanFictionAPI() {
 
     this.addBookshelf = function (shelfName, fandom, callback) {
         chrome.storage.local.get('Bookshelves', function (items) {
-            var list,
+            let list,
                 nextId;
             if (items.Bookshelves) {
                 list = items.Bookshelves;
-                nextId = list.length;
+                nextId = list[list.length - 1].id + 1;
             } else {
                 list = [];
                 nextId = 0;
             }
-
-            list[nextId] = ({id: nextId, name: shelfName, fandom: fandom});
+            
+            list = list.concat({id: nextId, name: shelfName, fandom: fandom});
             chrome.runtime.sendMessage({ updated: 'Bookshelves', val: list });
             if (callback) {
                 callback(nextId);
@@ -2432,21 +2437,6 @@ function ArchiveOfOurOwnAPI() {
             return {url: false}
         }
     }
-    
-    function getBookmarksFromUser(url, callback, index = 1, list = []) {
-        $.get(url + index,
-            function (data) {
-                list = list.concat(Array.from($(data).find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
-                if ($(data).find('.next a').length && index < 25) {
-                    getBookmarksFromUser(url, callback, index + 1, list);
-                } else {
-                    callback(list);
-                }
-            },
-        'html').fail(function () {
-            callback([]);
-        });
-    }
 
     function readSubscriptionList(callback, index = 1, list = []) {
         if (userName) {
@@ -2467,43 +2457,81 @@ function ArchiveOfOurOwnAPI() {
             });
         }
     }
+    
+    function getBookmarksFromUser(url, callback, index = 1, list = []) {
+        $.get(url + index,
+            function (data) {
+                if (alsoLikedCancelled){
+                    return;
+                }
+                data = $(data);
+                try {
+                    list = list.concat(Array.from(data.find('.bookmark h4.heading > a:first-child'), el => 'a' + el.href.slice(el.href.lastIndexOf('/') + 1)));
+                } catch (error) {
+                    console.warn("ERROR: Couldn't parse user bookmarks")
+                }
+                if (data.find('.next a').length && index < 10) {
+                    getBookmarksFromUser(url, callback, index + 1, list);
+                } else {
+                    callback(list);
+                }
+            },
+        'html').fail(function () {
+            if (alsoLikedCancelled){
+                return;
+            }
+            callback([]);
+        });
+    }
 
-    this.getUsersBookmarks = function(users, callback) {
-        var list = [],
-            count = users.length,
-            progressBar = progressDialog({tasks: count, parent: $('#alsoliked_tab')});
-            progressBar.message(`Fetching the Harry Potter bookmarks of ${count} users`);
+    let alsoLikedCancelled = false;
+    this.getUsersBookmarks = async function(users, fandomName, fandomLink, callback) {
+        let count = users.length,
+            list = [],
+            progressBar = progressDialog({tasks: count, parent: $('#alsoliked_tab'),
+                                            cancelled: () => {
+                                                alsoLikedCancelled = true
+                                                formatAlsoLiked(list, callback);
+                                            }});
+        alsoLikedCancelled = false;
+        progressBar.message(`Fetching the ${fandomName} bookmarks of ${count} users`);
+        let fandomWorksPage = await $.get(fandomLink);
+        let fandomID = $(fandomWorksPage).find('#include_fandom_tags ul li:first-child input').get(0).value;
         users.forEach(function (val, i) {
-            //Hardcoded Harry Potter Fandom id: 136512
-            getBookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + '136512' + '&page=', function (l) {
+            getBookmarksFromUser(val + '/bookmarks?bookmark_search%5Bfandom_ids%5D%5B%5D=' + fandomID + '&page=', function (l) {
                 list.push(...l);
                 count--;
+                console.log(count);
                 progressBar.advance();
-                if (count <= 0) {
-                    let also = {};
-                    list.forEach(function (item) {
-                        if (!also[item]) {
-                            also[item] = 1;
-                        } else {
-                            also[item] += 1;
-                        }
-    
-                    });
-                    list = Object.keys(also).map(prop => ({
-                        k: prop,
-                        v: also[prop],
-                    }));
-                    console.log('Found ' + list.length + ' bookmarked stories.');
-                    list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
-                    console.log(list.length + ' of which were bookmarked by more than one person.');
-                    if (list.length > 50) {
-                        list = list.filter((item, pos) => pos < 49 && item.v > 2);
-                    }
+                if (count <= 0 && !alsoLikedCancelled) {
+                    formatAlsoLiked(list, callback);
                     progressBar.close();
-                    callback({created: Date.now(), stories: list});
                 }
             });
         });
+    }
+
+    function formatAlsoLiked(list, callback) {
+        let also = {};
+        list.forEach(function (item) {
+            if (!also[item]) {
+                also[item] = 1;
+            }
+            else {
+                also[item] += 1;
+            }
+        });
+        list = Object.keys(also).map(prop => ({
+            k: prop,
+            v: also[prop],
+        }));
+        console.log('Found ' + list.length + ' bookmarked stories.');
+        list = list.filter(item => item.v > 1).sort((a, b) => b.v - a.v);
+        console.log(list.length + ' of which were bookmarked by more than one person.');
+        if (list.length > 50) {
+            list = list.filter((item, pos) => pos < 49 && item.v > 2);
+        }
+        callback({ created: Date.now(), stories: list });
     }
 
     this.getSubscriptions = function (callback) {
@@ -2549,7 +2577,8 @@ progressDialog
     that = {
         tasks: 3,                   //number of things that need doing
         parent: $('')               //jquery element to append to
-        finish: function () {}        //a function to run after the dialog closes
+        finish: function () {}      //a function to run after the dialog closes
+        cancelled: function () {}   //a function to run upon cancellation
     }
 ====================
 */
@@ -2562,7 +2591,9 @@ function progressDialog(that = {}) {
     tasks = that.tasks || 0;
     dialog = $('<div>', {
         class: 'progress-dialog',
-        html: '<span id="progressMsg"></span><progress value="0" max="' + tasks + '"></progress>',
+        html: `<span id="progressMsg"></span>
+               <progress value="0" max="${tasks}"></progress>
+               <span class="cancel">Click to cancel</span>`,
     });
 
     that.parent.append(dialog);
@@ -2574,6 +2605,17 @@ function progressDialog(that = {}) {
             that.finish();
         }
     };
+
+    if ('cancelled' in that) {
+        dialog.find('.cancel').click(() => {
+            console.log("Cancelling progress dialog");
+            that.cancelled();
+            that.close();
+        });
+    } else {
+        dialog.find('.cancel').remove();
+    }
+    
 
     that.progressSet = function (progress) {
         $({value: val}).animate({value: progress}, {
@@ -2640,12 +2682,37 @@ function fandomsMatch(a, b) {
     return false;
 }
 
-let fandomMap = {
-    'Harry Potter': 'Harry Potter - J. K. Rowling',
-}
+let fandomMap = (() => {
+    let HarryPotter = 'Harry Potter',
+        DragonAge = 'Dragon Age',
+        StarWars = 'Star Wars';
+
+    return {
+        'Harry Potter': HarryPotter,
+        'Harry Potter - J. K. Rowling': HarryPotter,
+
+        'Dragon Age': DragonAge,
+        'Dragon Age: Inquisition': DragonAge,
+        'Dragon Age - All Media Types': DragonAge,
+        'Dragon Age (Video Games)': DragonAge,
+
+        'Star Wars': StarWars,
+        'Star Wars Episode VIII: The Last Jedi (2017)': StarWars,
+        'Star Wars Episode VII: The Force Awakens (2015)': StarWars,
+        'Star Wars Sequel Trilogy': StarWars,
+        'Reylo - Fandom': StarWars,
+        'Star Wars - All Media Types': StarWars,
+        'Star Wars Legends: Knights of the Old Republic': StarWars,
+        'Star Wars Legends: Knights of the Old Republic II: The Sith Lords': StarWars
+    }
+})()
 
 function fandomEqual(a, b){
-    return a === b || fandomMap[a] === b || fandomMap[b] === a;
+    return a === b || (fandomMap[a] && fandomMap[a] === fandomMap[b]);
+}
+
+function normalizeFandoms(fandoms) {
+    return [...new Set(fandoms.map(f => fandomMap[f] || f))]
 }
 
 function htmlEntities(str) {
