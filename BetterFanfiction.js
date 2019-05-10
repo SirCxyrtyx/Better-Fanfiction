@@ -306,7 +306,7 @@ function storyPage() {
             $('#reviews').remove();
         }
         $(this).blur();
-    }).after('<img class="loading-reviews" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
+    }).after(`<img class="loading-reviews" style="display: none;" width="30" height="30" title="" src="${chrome.extension.getURL('spinner.gif')}" />`);
 }
 
 function groupPage() {
@@ -319,7 +319,7 @@ function groupPage() {
 
         $('.z-list').remove();
         $('center').remove();
-        $('hr + script').after('<img width="64" height="64" class="spinner" src="' + chrome.extension.getURL('spinner.gif') + '" />');
+        $('hr + script').after(`<img width="64" height="64" class="spinner" src="${chrome.extension.getURL('spinner.gif')}" />`);
 
         ffAPI.getGroupStories(pathParts, function (list) {
             //inserts stories and removes spinner
@@ -451,9 +451,9 @@ function userPage() {
 }
 
 function setUpStoryNav() {
-    var selectWidth;
+    setUpChapSelect();
+
     //remove original event-bindings
-    $('select[name="chapter"]').addClass('chap_select').removeAttr('onchange');
     $('.chap_select ~ button').addClass('nav-next').removeAttr('onclick');
     $('button[onclick^="self"]:not(.nav-next)').addClass('nav-prev').removeAttr('onclick');
     $('#content_wrapper_inner > span').replaceWith($('#content_wrapper_inner > span').clone(false));
@@ -468,10 +468,10 @@ function setUpStoryNav() {
     }
 
     //add loading spinners
-    $('.chap_select').after('<img class="loading-next" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
-    $('.chap_select').before('<img class="loading-prev" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />');
-    selectWidth = $('.chap_select').outerWidth();
-    $('<img class="loading-select" style="display: none;" width="30" height="30" title="" src="' + chrome.extension.getURL('spinner.gif') + '" />')
+    $('.chap_select').after(`<img class="loading-next" style="display: none;" width="30" height="30" title="" src="${chrome.extension.getURL('spinner.gif')}" />`);
+    $('.chap_select').before(`<img class="loading-prev" style="display: none;" width="30" height="30" title="" src="${chrome.extension.getURL('spinner.gif')}" />`);
+    let selectWidth = $('.chap_select').outerWidth();
+    $(`<img class="loading-select" style="display: none;" width="30" height="30" title="" src="${chrome.extension.getURL('spinner.gif')}" />`)
         .css('padding', '0px ' + (selectWidth - 30) / 2 + 'px').insertAfter('.chap_select');
 
     $('.nav-next').eq(0).click(function (e) {
@@ -510,6 +510,10 @@ function setUpStoryNav() {
         });
         $(this).blur();
     });
+}
+
+function setUpChapSelect(){
+    $('select[name="chapter"]').addClass('chap_select').removeAttr('onchange');
 
     $('.chap_select').eq(0).change(function (e) {
         var target = e.target;
@@ -571,6 +575,7 @@ function loadChapterInPlace(d, scrollToTop = false, popState = false) {
 
     if (d.chapters > $('.chap_select')[0].length) {
         $('.chap_select').replaceWith(d.data.find('select').eq(0));
+        setUpChapSelect();
         $('.summary').html(d.description);
         $('ol.info-list li').each(function () {
             switch (this.className) {
@@ -2683,29 +2688,22 @@ function fandomsMatch(a, b) {
 }
 
 let fandomMap = (() => {
-    let HarryPotter = 'Harry Potter',
-        DragonAge = 'Dragon Age',
-        StarWars = 'Star Wars';
-
-    return {
-        'Harry Potter': HarryPotter,
-        'Harry Potter - J. K. Rowling': HarryPotter,
-
-        'Dragon Age': DragonAge,
-        'Dragon Age: Inquisition': DragonAge,
-        'Dragon Age - All Media Types': DragonAge,
-        'Dragon Age (Video Games)': DragonAge,
-
-        'Star Wars': StarWars,
-        'Star Wars Episode VIII: The Last Jedi (2017)': StarWars,
-        'Star Wars Episode VII: The Force Awakens (2015)': StarWars,
-        'Star Wars Sequel Trilogy': StarWars,
-        'Reylo - Fandom': StarWars,
-        'Star Wars - All Media Types': StarWars,
-        'Star Wars Legends: Knights of the Old Republic': StarWars,
-        'Star Wars Legends: Knights of the Old Republic II: The Sith Lords': StarWars
+    let temp = {
+        'Star Wars' : ["Star Wars Episode VIII: The Last Jedi (2017)", "Star Wars Episode VII: The Force Awakens (2015)", 
+                       "Star Wars Sequel Trilogy", "Reylo - Fandom", "Star Wars - All Media Types",
+                       "Star Wars Legends: Knights of the Old Republic", "Star Wars Legends: Knights of the Old Republic II: The Sith Lords"],
+        'Dragon Age': ['Dragon Age: Inquisition', 'Dragon Age - All Media Types', 'Dragon Age (Video Games)'],
+        'Harry Potter': ['Harry Potter - J. K. Rowling'],
+    };
+    let map = {};
+    for (const [k, v] of Object.entries(temp)){
+        map[k] = k;
+        for (const n of v) {
+            map[n] = k;
+        }
     }
-})()
+    return map;
+})();
 
 function fandomEqual(a, b){
     return a === b || (fandomMap[a] && fandomMap[a] === fandomMap[b]);
