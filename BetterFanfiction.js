@@ -1235,7 +1235,7 @@ function openStoryLanding(e) {
     } else {
         let loadedStorys = $('#story_landing .story_container').hide();
         if (loadedStorys.filter('[data-id=' + storyId + ']').show().length === 0) {
-            $.get(getStoryLink(storyId), function (data) {
+            crossOriginGet(getStoryLink(storyId), function (data) {
                 populateStoryLanding(parseStoryData(data, storyId));
                 $('#story_landing').modal().css('display', 'block').addClass('in');
 
@@ -1465,7 +1465,7 @@ function populateBookshelf(storyIds, bookshelf, byComplete = true) {
     storyIds.forEach(function (val, i) {
         //add stories that aren't on bookshelf already
         if (val !== 0 && !existing.includes(val)) {
-            $.get(getStoryLink(val), function (data) {
+            crossOriginGet(getStoryLink(val), function (data) {
                 try {
                     wrapper.append(createStoryCard(parseStoryData(data, val), i, byComplete));
                 } catch (e) {
@@ -1500,7 +1500,7 @@ function populateBookshelfAlt(stories, bookshelf) {
         part = stories.splice(0, storyCardsPerPage),
         count = part.length;
     part.forEach(function (val, i) {
-        $.get(getStoryLink(val.k), function (data) {
+        crossOriginGet(getStoryLink(val.k), function (data) {
             try {
                 wrapper.append(createStoryCard(parseStoryData(data, val.k), -val.v, false));
             } catch (e) {
@@ -1511,7 +1511,9 @@ function populateBookshelfAlt(stories, bookshelf) {
             if (count === 0) {
                 setTimeout(alignStoryCards, 100, wrapper);
             }
-        }).fail(function () {
+        },
+        //error
+        function () {
             console.log(`${val.k} did not load.`);
         });
     });
@@ -1524,6 +1526,16 @@ function populateBookshelfAlt(stories, bookshelf) {
         }).children('span').html('Load ' + (stories.length > storyCardsPerPage ? (storyCardsPerPage + ' more') : ('all ' + stories.length + ' remaining')) + ' stories');
         wrapper.append(loadBtn);
     }
+}
+
+function crossOriginGet(url, success, error) {
+    chrome.runtime.sendMessage({relayGET: true, url}, (response) => {
+        if (response.success && success !== undefined) {
+            success(response.data);
+        } else if (response.error && error !== undefined) {
+            error();
+        }
+    });
 }
 
 function parseStoryData(data, storyid) {

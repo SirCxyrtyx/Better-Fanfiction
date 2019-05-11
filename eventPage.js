@@ -3,6 +3,7 @@
 'use strict';
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+    console.log(request);
     if (request.updated) {
         let user = firebase.auth().currentUser;
         if (user) {
@@ -15,6 +16,18 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             sendResponse({ authStatus: false });
             startAuth(true);
         }
+    } else if (request.relayGET) {
+        $.ajax({
+            url: request.url,
+            success: (data) => {
+                sendResponse({success: true, data});
+            },
+            error: () => {
+                sendResponse({error: true});
+            },
+          });
+        //indicates that sendResponse will be called asynchronously.
+        return true;
     }
 });
 
