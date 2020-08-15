@@ -202,6 +202,10 @@ function storyPage() {
     chapter = ($('select').length && $('select').get(0).selectedIndex) + 1;
     let storyData = parseFFnStoryData('html', storyid);
     let storyHeader = createStoryHeader(storyData);
+
+    //remove custom fonts and sizing from story text
+    $('#storytext p').css('font-family', '').css('font-size', '');
+
     $('#profile_top').remove();
     $('#content_parent').prepend(storyHeader);
     setUpBookshelfBar('#profile_top', storyData);
@@ -546,6 +550,10 @@ function loadChapterInPlace(d, scrollToTop = false, popState = false) {
 
     $('body > div[style^="position"]').remove();
     $('#storytext').replaceWith(d.data.find('#storytext'));
+    
+    //remove custom fonts and sizing from story text
+    $('#storytext p').css('font-family', '').css('font-size', '');
+    
     if (!popState) {
         history.pushState({story: d.storyid, chapter: chapter, url: d.storyLink + '/' + chapter}, '', d.storyLink + '/' + chapter);
     }
@@ -2705,7 +2713,7 @@ let fandomMap = (() => {
                        "Star Wars Sequel Trilogy", "Reylo - Fandom", "Star Wars - All Media Types",
                        "Star Wars Legends: Knights of the Old Republic", "Star Wars Legends: Knights of the Old Republic II: The Sith Lords"],
         'Dragon Age': ['Dragon Age: Inquisition', 'Dragon Age - All Media Types', 'Dragon Age (Video Games)'],
-        'Harry Potter': ['Harry Potter - J. K. Rowling'],
+        'Harry Potter': ['Harry Potter - J. K. Rowling', 'Harry Potter - Fandom'],
     };
     let map = {};
     for (const [k, v] of Object.entries(temp)){
